@@ -111,23 +111,20 @@ class OverlayWindow(QMainWindow):
         self.exec(f"brightnessctl --quiet set {sender.value()}")
 
     def killWindow(self, title, pid):
+        button = self.sender()
         self.exec(f"kill {pid}")
-        # self.cm.getContainer(self.wm_name).removeWidget(title.lower().replace(" ", "_"))
-        self.toggleVisibility()
+        self.cm.getContainer(self.wm_name).layout.removeWidget(button)
+        button.deleteLater()
 
     def spawnLogout(self):
         power_cmd = "qdbus org.kde.LogoutPrompt /LogoutPrompt org.kde.LogoutPrompt.promptShutDown"
         self.exec(power_cmd)
         self.toggleVisibility()
 
-    def getServiceStatus(self, service):
-        status = self.exec(f"systemctl is-active --quiet {service}")
-        return status.returncode == 0
-
     def toggleService(self, service):
         button = self.sender()
         label, status = button.text().split(":")
-        service_status = self.getServiceStatus(service)
+        service_status = self.exec(f"systemctl is-active --quiet {service}").returncode == 0
         action = "stop" if service_status else "start"
 
         self.exec(f"systemctl {action} {service}")
@@ -138,7 +135,7 @@ class OverlayWindow(QMainWindow):
         button.setText(f"{label}: {button_state}")
         button.setStyleSheet(self.gs.buttonStyle(button_color, self.gs.button_font_size, self.gs.opacity))
 
-    def checkDesktop(self):
+    def toggleDesktop(self):
         pid = self.exec("pkill plasmashell", status=True)
         if not pid:
             # threading.Thread(target=self.exec, args=(f"sudo -u pi plasmashell", False,)).start()
@@ -152,21 +149,20 @@ class OverlayWindow(QMainWindow):
         for window in windows:
             if "plasma" in window["title"].lower(): continue
             self.cm.getContainer(self.wm_name).createButton(
-                window["title"], partial(self.killWindow, window["title"], window["pid"]),
+                window["binary_name"], partial(self.killWindow, window["title"], window["pid"]),
                 self.gs.gray, self.gs.opacity)
         self.cm.getContainer(self.wm_name).populateContainer()
 
     def updateProfile(self):
         current_profile = self.exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
-
         for i in range(self.cm.getContainer(self.nvpm_name).layout.count()):
             button = self.cm.getContainer(self.nvpm_name).layout.itemAt(i).widget()
             if not isinstance(button, QPushButton):
                 continue
-            if button.text().endswith("(Current)"):
-                button.setText(button.text().replace("(Current)", ""))
+            if button.text().endswith(self.profile_append):
+                button.setText(button.text().replace(self.profile_append, ""))
             if button.text().split(":")[0] == current_profile:
-                button.setText(f"{button.text()} (Current)")
+                button.setText(f"{button.text()}{self.profile_append}")
 
     def changeProfile(self, profile):
         cmd = f"sudo /usr/sbin/nvpmodel -m {profile}"
@@ -218,7 +214,8 @@ class OverlayWindow(QMainWindow):
             service_exist = self.exec(f"systemctl show {service} --no-page --property=LoadState")
             if service_exist.stdout.strip() == "LoadState=not-found":
                 continue
-            service_state, bg_color = ["ON", self.gs.green] if self.getServiceStatus(service) else ["OFF", self.gs.gray]
+            status = self.exec(f"systemctl is-active --quiet {service}").returncode == 0
+            service_state, bg_color = ["ON", self.gs.green] if status else ["OFF", self.gs.gray]
             self.cm.getContainer(self.services_name).createButton(f"{label_text}: {service_state}", \
                                        partial(self.toggleService, service), \
                                        bg_color, self.gs.opacity)
@@ -228,6 +225,7 @@ class OverlayWindow(QMainWindow):
         self.nvpm_name = "OC Profile"
         self.createSubcontainer(self.nvpm_name, self.cm.getContainer(self.toolbox_name))
         current_profile = self.exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
+        self.profile_append = " ✓"
         self.profiles = {
             "0": "Console",
             "1": "Handheld",
@@ -240,7 +238,7 @@ class OverlayWindow(QMainWindow):
         for value, name in self.profiles.items():
             title = f"{value}: {name}"
             if value == current_profile:
-                title += " (Current)"
+                title += self.profile_append
             self.cm.getContainer(self.nvpm_name).createButton(title, partial(self.changeProfile, value))
 
 
@@ -262,7 +260,7 @@ class OverlayWindow(QMainWindow):
 
 
         '''Debug Stuff'''
-        self.cm.getContainer("debug_menu").createButton("toggle_desktop", self.checkDesktop, self.gs.gray, self.gs.opacity)
+        self.cm.getContainer("debug_menu").createButton("toggle_desktop", self.toggleDesktop, self.gs.gray, self.gs.opacity)
         self.cm.getContainer("debug_menu").createButton("debug_exit", self.closeApplication, self.gs.red, 0.35)
         
 

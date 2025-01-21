@@ -114,7 +114,7 @@ class Main:
         gs = overlay_menu.GlobalStyle()
         app = overlay_menu.QApplication([])
         self.overlay = overlay_menu.OverlayWindow(gs)
-        app.exec_()
+        app.exec()
         
 if __name__ == "__main__":
     try:

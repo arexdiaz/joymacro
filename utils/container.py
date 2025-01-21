@@ -1,5 +1,5 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QPushButton, QSlider, QMenu, QAction, QHBoxLayout, QLabel
-from PyQt5.QtCore import Qt, QRect, QThread
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QSlider
+from PyQt5.QtCore import Qt
 from functools import partial
 import time
 import logging
