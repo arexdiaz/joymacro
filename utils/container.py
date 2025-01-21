@@ -2,7 +2,10 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QPu
 from PyQt5.QtCore import Qt, QRect, QThread
 from functools import partial
 import time
+import logging
 
+
+logger = logging.getLogger("main")
 
 class ContainerManager:
     def __init__(self):
@@ -130,8 +133,12 @@ class ContainerProp:
         self.widgets[slider.id] = slider
     
     def removeWidget(self, id):
+        logger.debug(f"Removing widget: {id}")
         self.layout.removeWidget(self.widgets[id])
         self.layout.update()
+
+    def getWidget(self, id):
+        return self.layout.itemAt(self.layout.indexOf(self.widgets[id]))
 
     def resetLayout(self):
         for id, widget in self.widgets.items():

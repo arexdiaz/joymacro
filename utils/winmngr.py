@@ -29,12 +29,14 @@ class WindowManager():
                 if len(parts) == 4:
                     window_id, desktop_id, machine, title = parts
                     pid = self.get_pid(int(window_id, 16))
+                    process_name = subprocess.check_output(["ps", "-p", str(pid), "-o", "comm="]).strip().decode()
                     window_list.append({
                         "window_id": window_id,
                         "desktop_id": desktop_id,
                         "machine": machine,
                         "title": title,
                         "pid": pid,
+                        "process_name": process_name,
                     })
             
             return window_list

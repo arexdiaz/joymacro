@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton
 from PyQt5.QtCore import Qt, QRect, QThread, QMetaObject, pyqtSlot
 from PyQt5.QtGui import QColor
 from functools import partial
@@ -79,6 +79,7 @@ class OverlayWindow(QMainWindow):
             self.setWindowFlags(self.flags | Qt.WindowTransparentForInput)
             QApplication.processEvents()
         else:
+            self.updateProfile()
             QMetaObject.invokeMethod(self, "populateWindowsCont", Qt.QueuedConnection)
             self.raise_()
             self.activateWindow()
@@ -109,14 +110,9 @@ class OverlayWindow(QMainWindow):
         sender = self.sender()
         self.exec(f"brightnessctl --quiet set {sender.value()}")
 
-    def killWindow(self):
-        if not self.last_active:
-            logger.error("No active window found")
-            return
-        name, pid = self.last_active
-        if "Desktop" in name:
-            return
+    def killWindow(self, title, pid):
         self.exec(f"kill {pid}")
+        # self.cm.getContainer(self.wm_name).removeWidget(title.lower().replace(" ", "_"))
         self.toggleVisibility()
 
     def spawnLogout(self):
@@ -151,14 +147,32 @@ class OverlayWindow(QMainWindow):
     @pyqtSlot()
     def populateWindowsCont(self):
         """Loop to check for new windows and add them to the 'Windows' container."""
-        self.cm.getContainer("Window Manager").resetLayout()
+        self.cm.getContainer(self.wm_name).resetLayout()
         windows = WindowManager().check_windows()
         for window in windows:
             if "plasma" in window["title"].lower(): continue
-            self.cm.getContainer("Window Manager").createButton(
-                window["title"], partial(self.exec, f"kill {window["pid"]}"),
+            self.cm.getContainer(self.wm_name).createButton(
+                window["title"], partial(self.killWindow, window["title"], window["pid"]),
                 self.gs.gray, self.gs.opacity)
-        self.cm.getContainer("Window Manager").populateContainer()
+        self.cm.getContainer(self.wm_name).populateContainer()
+
+    def updateProfile(self):
+        current_profile = self.exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
+
+        for i in range(self.cm.getContainer(self.nvpm_name).layout.count()):
+            button = self.cm.getContainer(self.nvpm_name).layout.itemAt(i).widget()
+            if not isinstance(button, QPushButton):
+                continue
+            if button.text().endswith("(Current)"):
+                button.setText(button.text().replace("(Current)", ""))
+            if button.text().split(":")[0] == current_profile:
+                button.setText(f"{button.text()} (Current)")
+
+    def changeProfile(self, profile):
+        cmd = f"sudo /usr/sbin/nvpmodel -m {profile}"
+        self.exec(cmd)
+        self.updateProfile()
+
     '''End Commands'''
 
 
@@ -181,10 +195,15 @@ class OverlayWindow(QMainWindow):
                                            self.height(), self.gs.menu_color)
         self.cm.addContainer("Primary", primary_container)
         
-        self.createSubcontainer("Services", primary_container)
-        self.createSubcontainer("Apps", primary_container)
-        self.createSubcontainer("Scripts", primary_container)
-        self.createSubcontainer("Window Manager", primary_container, pos="bottom")
+        self.app_name = "Apps"
+        self.toolbox_name = "Toolbox"
+        self.services_name = "Services"
+        self.wm_name = "Window Manager"
+        self.debug_name = "debug_menu"
+        self.createSubcontainer(self.app_name, primary_container)
+        self.createSubcontainer(self.toolbox_name, primary_container)
+        self.createSubcontainer(self.services_name, self.cm.getContainer(self.toolbox_name))
+        self.createSubcontainer(self.wm_name, primary_container, pos="bottom")
         if logger.getEffectiveLevel() == logging.DEBUG:
             self.createSubcontainer("debug_menu", primary_container)
 
@@ -200,30 +219,53 @@ class OverlayWindow(QMainWindow):
             if service_exist.stdout.strip() == "LoadState=not-found":
                 continue
             service_state, bg_color = ["ON", self.gs.green] if self.getServiceStatus(service) else ["OFF", self.gs.gray]
-            self.cm.getContainer("Services").createButton(f"{label_text}: {service_state}", \
+            self.cm.getContainer(self.services_name).createButton(f"{label_text}: {service_state}", \
                                        partial(self.toggleService, service), \
                                        bg_color, self.gs.opacity)
+                                       
+                                       
         '''Script Stuff'''
+        self.nvpm_name = "OC Profile"
+        self.createSubcontainer(self.nvpm_name, self.cm.getContainer(self.toolbox_name))
+        current_profile = self.exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
+        self.profiles = {
+            "0": "Console",
+            "1": "Handheld",
+            "2": "OC CPU",
+            "3": "OC GPU",
+            "4": "OC All",
+            "5": "Perf All",
+            "6": "Perf OC All"
+        }
+        for value, name in self.profiles.items():
+            title = f"{value}: {name}"
+            if value == current_profile:
+                title += " (Current)"
+            self.cm.getContainer(self.nvpm_name).createButton(title, partial(self.changeProfile, value))
+
+
         scripts = {
             "Tmux Session": "tmux new-session -d -s simple",
-            "Link Cores": "/home/pi/scripts/link_cores.sh",
-            "gov: placeholder": "echo hello"
+            "Link Cores": "/home/pi/scripts/link_cores.sh"
         }
         for label_text, script in scripts.items():
-            self.cm.getContainer("Scripts").createButton(label_text, partial(self.threadedExec, script))
-        
+            self.cm.getContainer(self.toolbox_name).createButton(label_text, partial(self.threadedExec, script))
+
+
         '''Apps Stuff'''                             
         apps = {
+            "Emulation Station": "es-de",
             "Konsole": "konsole",
-            "Emulation Station": "es-de"
         }
         for label_text, app in apps.items():
-            self.cm.getContainer("Apps").createButton(label_text, partial(self.launchApp, app), self.gs.gray, self.gs.opacity)
+            self.cm.getContainer(self.app_name).createButton(label_text, partial(self.launchApp, app), self.gs.gray, self.gs.opacity)
+
 
         '''Debug Stuff'''
         self.cm.getContainer("debug_menu").createButton("toggle_desktop", self.checkDesktop, self.gs.gray, self.gs.opacity)
         self.cm.getContainer("debug_menu").createButton("debug_exit", self.closeApplication, self.gs.red, 0.35)
         
+
         '''Primary Stuff'''
         brightness = self.exec("brightnessctl get").stdout.strip()
         self.cm.getContainer("Primary").createSlider(self.setBrightness, "Brightness", value=int(brightness), min=1, max=255, pos="top")
