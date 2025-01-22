@@ -29,11 +29,11 @@ class ContainerManager:
         self.getContainer("Primary").container.setVisible(True)
 
 class ContainerProp:
-    def __init__(self, height, width, style_guide):
+    def __init__(self, height, width, gs):
         self.label = None
         self.widget = None
         self.widgets = {}
-        self.style_guide = style_guide
+        self.gs = gs
 
         self.screen_height = height
         self.screen_width = width
@@ -58,21 +58,21 @@ class ContainerProp:
     def createButton(self, label, callback, bg_color="0,0,0", opacity=0, pos="top"):
         button = QPushButton(label)
         button.setObjectName(label.lower().replace(" ", "_"))
-        button.setMinimumHeight(self.style_guide.elements_height)
+        button.setMinimumHeight(self.gs.elements_height)
         button.clicked.connect(callback)
         button.pos = pos
 
-        button.setStyleSheet(self.style_guide.buttonStyle(bg_color, self.style_guide.button_font_size, opacity))
+        button.setStyleSheet(self.gs.buttonStyle(bg_color, self.gs.button_font_size, opacity))
         self.widgets[button.objectName] = button
     
     def createSubmenu(self, container, label, bg_color="0,0,0", opacity=0, pos="top"):
         button = QPushButton(label)
-        button.setMinimumHeight(self.style_guide.elements_height)
+        button.setMinimumHeight(self.gs.elements_height)
         button.clicked.connect(partial(self.switchContainer, container.container))
         button.pos = pos
         button.setObjectName(label.lower().replace(" ", "_"))
 
-        button.setStyleSheet(self.style_guide.buttonStyle(bg_color, self.style_guide.button_font_size, opacity))
+        button.setStyleSheet(self.gs.buttonStyle(bg_color, self.gs.button_font_size, opacity))
         self.widgets[button.objectName] = button
 
     def switchContainer(self, u2container):
@@ -86,12 +86,12 @@ class ContainerProp:
         slider.setMinimum(min)
         slider.setMaximum(max)
         slider.setValue(value)
-        slider.setMinimumHeight(self.style_guide.elements_height)
+        slider.setMinimumHeight(self.gs.elements_height)
         slider.valueChanged.connect(callback)
 
         slider.setStyleSheet(f"""
             QSlider {{
-                background-color: rgba({self.style_guide.gray}, {self.style_guide.opacity});
+                background-color: rgba({self.gs.gray}, {self.gs.opacity});
                 height: 20px;
                 border-bottom: 2px solid gray;
                 border-radius: 0px;
@@ -109,8 +109,8 @@ class ContainerProp:
                 border: 4px solid #2196F3;
                 width: 21px;
                 border-radius: 10px;
-                margin-top: -{(self.style_guide.elements_height / 2) -10}px;
-                margin-bottom: -{(self.style_guide.elements_height / 2) -10}px;
+                margin-top: -{(self.gs.elements_height / 2) -10}px;
+                margin-bottom: -{(self.gs.elements_height / 2) -10}px;
             }}
 
             QSlider::handle:horizontal:hover {{
@@ -148,17 +148,21 @@ class ContainerProp:
         self.layout.update()
 
     def populateContainer(self):
-        empty_height = self.screen_height - (self.style_guide.elements_height * len(self.widgets))
+        total_widget_height = sum(widget.minimumHeight() for widget in self.widgets.values()) + self.gs.elements_height
+        empty_height = max(0, self.screen_height - total_widget_height)
+        print(f"Total widget height: {total_widget_height} Screen height: {self.screen_height} Empty height: {empty_height}")
+        
         empty_widget = QWidget(self.container)
         empty_widget.setFixedSize(self.container.width(), empty_height)
         empty_widget.pos = "top"
         empty_widget.setObjectName("empty")
-        self.widgets[empty_widget.objectName] = empty_widget
+        empty_widget.setStyleSheet("background-color: blue;")
+        self.widgets[empty_widget.objectName()] = empty_widget
         
-        for id, widget in self.widgets.items():
+        for widget in self.widgets.values():
             if widget.pos == "top":
                 self.layout.addWidget(widget)
-        for id, widget in self.widgets.items():
+        for widget in self.widgets.values():
             if widget.pos == "bottom":
                 self.layout.addWidget(widget)
         self.layout.update()
