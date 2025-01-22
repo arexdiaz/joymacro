@@ -1,4 +1,5 @@
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QSlider
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QSlider, QVBoxLayout, QLabel
+from PyQt6.QtGui import QColor, QFont
 from PyQt6.QtCore import Qt
 from functools import partial
 import time
@@ -40,7 +41,6 @@ class ContainerProp:
         self.container = None
         self.label = None
 
-
     def createContainer(self, OW, x, y, w, h, color, visible=True, label=None):
         self.container = QWidget(OW)
         self.container.setGeometry(x, y, w, h)
@@ -57,23 +57,23 @@ class ContainerProp:
 
     def createButton(self, label, callback, bg_color="0,0,0", opacity=0, pos="top"):
         button = QPushButton(label)
-        button.id = label.lower().replace(" ", "_")
+        button.setObjectName(label.lower().replace(" ", "_"))
         button.setMinimumHeight(self.style_guide.elements_height)
         button.clicked.connect(callback)
         button.pos = pos
 
         button.setStyleSheet(self.style_guide.buttonStyle(bg_color, self.style_guide.button_font_size, opacity))
-        self.widgets[button.id] = button
+        self.widgets[button.objectName] = button
     
     def createSubmenu(self, container, label, bg_color="0,0,0", opacity=0, pos="top"):
         button = QPushButton(label)
         button.setMinimumHeight(self.style_guide.elements_height)
         button.clicked.connect(partial(self.switchContainer, container.container))
         button.pos = pos
-        button.id = label.lower().replace(" ", "_")
+        button.setObjectName(label.lower().replace(" ", "_"))
 
         button.setStyleSheet(self.style_guide.buttonStyle(bg_color, self.style_guide.button_font_size, opacity))
-        self.widgets[button.id] = button
+        self.widgets[button.objectName] = button
 
     def switchContainer(self, u2container):
         self.container.setVisible(not self.container.isVisible())
@@ -81,7 +81,7 @@ class ContainerProp:
 
     def createSlider(self, callback, label, value=0, min=0, max=100, pos="top"):
         slider = QSlider(Qt.Orientation.Horizontal)
-        slider.id = label.lower().replace(" ", "_")
+        slider.setObjectName(label.lower().replace(" ", "_"))
         slider.pos = pos
         slider.setMinimum(min)
         slider.setMaximum(max)
@@ -130,7 +130,7 @@ class ContainerProp:
             }}
         """)
 
-        self.widgets[slider.id] = slider
+        self.widgets[slider.objectName] = slider
     
     def removeWidget(self, id):
         logger.debug(f"Removing widget: {id}")
@@ -152,8 +152,8 @@ class ContainerProp:
         empty_widget = QWidget(self.container)
         empty_widget.setFixedSize(self.container.width(), empty_height)
         empty_widget.pos = "top"
-        empty_widget.id = "empty"
-        self.widgets[empty_widget.id] = empty_widget
+        empty_widget.setObjectName("empty")
+        self.widgets[empty_widget.objectName] = empty_widget
         
         for id, widget in self.widgets.items():
             if widget.pos == "top":

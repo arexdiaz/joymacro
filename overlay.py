@@ -1,6 +1,5 @@
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton
 from PyQt6.QtCore import Qt, QMetaObject, pyqtSlot
-from PyQt6.QtGui import QColor
 from functools import partial
 from utils.container import ContainerManager, ContainerProp
 import logging
