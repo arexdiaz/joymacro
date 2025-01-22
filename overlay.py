@@ -8,7 +8,6 @@ import threading
 import subprocess
 import os
 from utils.winmngr import WindowManager
-import time
 
 logger = logging.getLogger("main")
 
