@@ -150,13 +150,11 @@ class ContainerProp:
     def populateContainer(self):
         total_widget_height = sum(widget.minimumHeight() for widget in self.widgets.values()) + self.gs.elements_height
         empty_height = max(0, self.screen_height - total_widget_height)
-        print(f"Total widget height: {total_widget_height} Screen height: {self.screen_height} Empty height: {empty_height}")
         
         empty_widget = QWidget(self.container)
         empty_widget.setFixedSize(self.container.width(), empty_height)
         empty_widget.pos = "top"
         empty_widget.setObjectName("empty")
-        empty_widget.setStyleSheet("background-color: blue;")
         self.widgets[empty_widget.objectName()] = empty_widget
         
         for widget in self.widgets.values():
