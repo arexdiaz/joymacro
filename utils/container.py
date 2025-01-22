@@ -1,5 +1,5 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QSlider
-from PyQt5.QtCore import Qt
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QSlider
+from PyQt6.QtCore import Qt
 from functools import partial
 import time
 import logging
@@ -80,7 +80,7 @@ class ContainerProp:
         u2container.setVisible(not u2container.isVisible())
 
     def createSlider(self, callback, label, value=0, min=0, max=100, pos="top"):
-        slider = QSlider(Qt.Horizontal)
+        slider = QSlider(Qt.Orientation.Horizontal)
         slider.id = label.lower().replace(" ", "_")
         slider.pos = pos
         slider.setMinimum(min)

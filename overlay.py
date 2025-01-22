@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton
-from PyQt5.QtCore import Qt, QRect, QThread, QMetaObject, pyqtSlot
-from PyQt5.QtGui import QColor
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton
+from PyQt6.QtCore import Qt, QMetaObject, pyqtSlot
+from PyQt6.QtGui import QColor
 from functools import partial
 from utils.container import ContainerManager, ContainerProp
 import logging
@@ -46,20 +46,21 @@ class GlobalStyle():
             }}
         """
 
+
 class OverlayWindow(QMainWindow):
     def __init__(self, gs):
-            super().__init__()
-            self.gs = gs
-            self.last_active = None
-            self.initUI()
+        super().__init__()
+        self.gs = gs
+        self.last_active = None
+        self.initUI()
 
     def initUI(self):
-        self.flags = Qt.FramelessWindowHint | Qt.Tool | Qt.WindowStaysOnTopHint
+        self.flags = Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool | Qt.WindowType.WindowStaysOnTopHint
         self.setWindowFlags(self.flags)
-        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         screen_size = QApplication.primaryScreen().size()
         self.setGeometry(0, 0, screen_size.width(), screen_size.height())
-        self.setWindowState(Qt.WindowFullScreen)
+        self.setWindowState(Qt.WindowState.WindowFullScreen)
 
         self.cm = ContainerManager()
 
@@ -76,18 +77,18 @@ class OverlayWindow(QMainWindow):
             self.last_active = None
             self.cm.toggleContainers()
             self.hide()
-            self.setWindowFlags(self.flags | Qt.WindowTransparentForInput)
+            self.setWindowFlags(self.flags | Qt.WindowType.WindowTransparentForInput)
             QApplication.processEvents()
         else:
             self.updateProfile()
-            QMetaObject.invokeMethod(self, "populateWindowsCont", Qt.QueuedConnection)
+            QMetaObject.invokeMethod(self, "populateWindowsCont", Qt.ConnectionType.QueuedConnection)
             self.raise_()
             self.activateWindow()
             self.setWindowFlags(self.flags)
-            self.setWindowState(Qt.WindowFullScreen)
+            self.setWindowState(Qt.WindowState.WindowFullScreen)
             self.show()
             QApplication.processEvents()
-    
+
     def closeApplication(self, event=None):
         QApplication.quit()
         os._exit(0)
@@ -97,7 +98,7 @@ class OverlayWindow(QMainWindow):
         result = subprocess.run(command, capture_output=True, shell=True, text=True)
         logger.error(f"{command}: {result.stderr.strip()}") if result.returncode != 0 else None
         return result
-    
+
     def threadedExec(self, command):
         threading.Thread(target=self.exec, args=(command,)).start()
 
@@ -170,9 +171,6 @@ class OverlayWindow(QMainWindow):
         self.updateProfile()
 
     '''End Commands'''
-
-
-
 
 
     '''Init Thingy'''
