@@ -52,9 +52,8 @@ class OverlayWindow(QMainWindow):
         self.gs = gs
         self.last_active = None
         self.initUI()
-        self.windows = None
 
-        self.monitor_thread = WindowMonitorThread(self)
+        self.monitor_thread = WindowMonitorThread()
         self.monitor_thread.new_window_detected.connect(self.populateWindowsCont)
         self.monitor_thread.window_closed.connect(self.populateWindowsCont)
         self.monitor_thread.start()
@@ -142,18 +141,11 @@ class OverlayWindow(QMainWindow):
 
     @pyqtSlot()
     def populateWindowsCont(self):
-        def removeButton(button):
-            if button is not None and not sip.isdeleted(button):
-                container = self.cm.getContainer(self.wm_name)
-                container.removeWidget(button.objectName())
-                container.removeWidget("empty")
-                container.populateContainer()
-
         container = self.cm.getContainer(self.wm_name)
         container.resetLayout()
         self.monitor_threads = []
 
-        for window in self.windows:
+        for window in self.monitor_thread.windows:
             if "plasma" in window["title"].lower():
                 continue
 
