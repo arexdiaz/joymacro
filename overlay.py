@@ -54,8 +54,8 @@ class OverlayWindow(QMainWindow):
         self.initUI()
 
         self.monitor_thread = WindowMonitorThread()
-        self.monitor_thread.new_window_detected.connect(self.populateWindowsCont)
-        self.monitor_thread.window_closed.connect(self.populateWindowsCont)
+        self.monitor_thread.on_window_create.connect(self.addWindow)
+        self.monitor_thread.on_window_close.connect(self.removeWindow)
         self.monitor_thread.start()
 
     def initUI(self):
@@ -75,6 +75,9 @@ class OverlayWindow(QMainWindow):
         background_widget.setGeometry(0, 0, self.width(), self.height())
         background_widget.mousePressEvent = self.toggleVisibility
         self.initMenu()
+
+    def signalOnCreate(self, pid, window):
+        print(f"Window Created: {pid}, {window}")
 
     def toggleVisibility(self, event=None):
         if self.isVisible():
@@ -139,6 +142,19 @@ class OverlayWindow(QMainWindow):
             # threading.Thread(target=self.exec, args=(f"sudo -u pi plasmashell", False,)).start()
             self.exec("sudo -u pi plasmashell &", False)
 
+    def addWindow(self, window):
+        container = self.cm.getContainer(self.wm_name)
+        container.createButton(window["binary_name"], partial(self.exec, f"kill {window['pid']}"),
+                               self.gs.gray, self.gs.opacity)
+        container.removeWidget("empty")
+        container.populateContainer()
+    
+    def removeWindow(self, window):
+        container = self.cm.getContainer(self.wm_name)
+        container.removeWidget(window["binary_name"].lower().replace(" ", "_"))
+        container.removeWidget("empty")
+        container.populateContainer()
+
     @pyqtSlot()
     def populateWindowsCont(self):
         container = self.cm.getContainer(self.wm_name)
@@ -149,10 +165,8 @@ class OverlayWindow(QMainWindow):
             if "plasma" in window["title"].lower():
                 continue
 
-            container.createButton(
-                window["binary_name"], partial(self.exec, f"kill {window['pid']}"),
-                self.gs.gray, self.gs.opacity
-            )
+            container.createButton(window["binary_name"], partial(self.exec, f"kill {window['pid']}"),
+                self.gs.gray, self.gs.opacity)
 
         container.populateContainer()
 

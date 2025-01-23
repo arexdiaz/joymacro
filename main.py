@@ -108,7 +108,6 @@ class Main:
 
                 time.sleep(0.2)
 
-        # threading.Thread(target=read_gpio_events).start()
         threading.Thread(target=read_sdl_events).start()
 
         gs = overlay_menu.GlobalStyle()

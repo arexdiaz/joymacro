@@ -29,8 +29,10 @@ def getWindows():
             if len(parts) == 4:
                 window_id, desktop_id, machine, title = parts
                 pid = _getPid(int(window_id, 16))
-                if pid is None: continue
 
+                if pid is None: continue
+                if "Plasma" in title: continue
+                
                 result = subprocess.run(f"ps -p {pid} -o comm=", capture_output=True, shell=True, text=True)
                 binary_name = result.stdout.strip() if result.returncode == 0 else "Unknown"
                 
@@ -49,8 +51,8 @@ def getWindows():
         logger.error(f"Error: {e}")
 
 class WindowMonitorThread(QThread):
-    new_window_detected = pyqtSignal()
-    window_closed = pyqtSignal()
+    on_window_create = pyqtSignal(dict)
+    on_window_close = pyqtSignal(dict)
 
     def __init__(self):
         super().__init__()
@@ -67,11 +69,11 @@ class WindowMonitorThread(QThread):
 
             for pid, window in self.current_windows.items():
                 if pid not in self.previous_windows:
-                    self.new_window_detected.emit()
+                    self.on_window_create.emit(window)
 
             for pid, window in self.previous_windows.items():
                 if pid not in self.current_windows:
-                    self.window_closed.emit()
+                    self.on_window_close.emit(window)
             self.previous_windows = self.current_windows
             self.msleep(self.eep_time)
 
