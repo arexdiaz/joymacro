@@ -31,7 +31,6 @@ class ContainerManager:
 class ContainerProp:
     def __init__(self, height, width, gs):
         self.label = None
-        self.widget = None
         self.widgets = {}
         self.gs = gs
 
@@ -61,9 +60,11 @@ class ContainerProp:
         button.setMinimumHeight(self.gs.elements_height)
         button.clicked.connect(callback)
         button.pos = pos
+        button.parent_label = self.label
 
         button.setStyleSheet(self.gs.buttonStyle(bg_color, self.gs.button_font_size, opacity))
-        self.widgets[button.objectName] = button
+        self.widgets[button.objectName()] = button
+        return button
     
     def createSubmenu(self, container, label, bg_color="0,0,0", opacity=0, pos="top"):
         button = QPushButton(label)
@@ -73,7 +74,7 @@ class ContainerProp:
         button.setObjectName(label.lower().replace(" ", "_"))
 
         button.setStyleSheet(self.gs.buttonStyle(bg_color, self.gs.button_font_size, opacity))
-        self.widgets[button.objectName] = button
+        self.widgets[button.objectName()] = button
 
     def switchContainer(self, u2container):
         self.container.setVisible(not self.container.isVisible())
@@ -130,11 +131,12 @@ class ContainerProp:
             }}
         """)
 
-        self.widgets[slider.objectName] = slider
+        self.widgets[slider.objectName()] = slider
     
     def removeWidget(self, id):
-        logger.debug(f"Removing widget: {id}")
         self.layout.removeWidget(self.widgets[id])
+        self.widgets[id].deleteLater()
+        self.widgets.pop(id)
         self.layout.update()
 
     def getWidget(self, id):
@@ -142,20 +144,21 @@ class ContainerProp:
 
     def resetLayout(self):
         for id, widget in self.widgets.items():
-            if id != "back":
+            if widget.objectName() != "back":
                 self.layout.removeWidget(widget)
+                widget.deleteLater()
         self.widgets = {}
         self.layout.update()
 
     def populateContainer(self):
-        total_widget_height = sum(widget.minimumHeight() for widget in self.widgets.values()) + self.gs.elements_height
+        total_widget_height = sum(widget.minimumHeight() for widget in self.widgets.values())
         empty_height = max(0, self.screen_height - total_widget_height)
         
-        empty_widget = QWidget(self.container)
-        empty_widget.setFixedSize(self.container.width(), empty_height)
-        empty_widget.pos = "top"
-        empty_widget.setObjectName("empty")
-        self.widgets[empty_widget.objectName()] = empty_widget
+        self.empty_widget = QWidget(self.container)
+        self.empty_widget.setFixedSize(self.container.width(), empty_height)
+        self.empty_widget.pos = "top"
+        self.empty_widget.setObjectName("empty")
+        self.widgets[self.empty_widget.objectName()] = self.empty_widget
         
         for widget in self.widgets.values():
             if widget.pos == "top":

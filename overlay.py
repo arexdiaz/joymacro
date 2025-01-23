@@ -1,15 +1,16 @@
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton
-from PyQt6.QtCore import Qt, QMetaObject, pyqtSlot
+from PyQt6.QtCore import Qt, QMetaObject, QThread, pyqtSignal, pyqtSlot
+from PyQt6 import sip
 from functools import partial
 from utils.container import ContainerManager, ContainerProp
 import logging
 import threading
 import subprocess
 import os
-from utils.winmngr import WindowManager
+import psutil
+from utils.winmngr import WindowMonitorThread
 
 logger = logging.getLogger("main")
-
 
 class GlobalStyle():
     def __init__(self):
@@ -51,6 +52,12 @@ class OverlayWindow(QMainWindow):
         self.gs = gs
         self.last_active = None
         self.initUI()
+        self.windows = None
+
+        self.monitor_thread = WindowMonitorThread(self)
+        self.monitor_thread.new_window_detected.connect(self.populateWindowsCont)
+        self.monitor_thread.window_closed.connect(self.populateWindowsCont)
+        self.monitor_thread.start()
 
     def initUI(self):
         self.flags = Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool | Qt.WindowType.WindowStaysOnTopHint
@@ -79,7 +86,6 @@ class OverlayWindow(QMainWindow):
             QApplication.processEvents()
         else:
             self.updateProfile()
-            QMetaObject.invokeMethod(self, "populateWindowsCont", Qt.ConnectionType.QueuedConnection)
             self.raise_()
             self.activateWindow()
             self.setWindowFlags(self.flags)
@@ -109,12 +115,6 @@ class OverlayWindow(QMainWindow):
         sender = self.sender()
         self.exec(f"brightnessctl --quiet set {sender.value()}")
 
-    def killWindow(self, title, pid):
-        button = self.sender()
-        self.exec(f"kill {pid}")
-        self.cm.getContainer(self.wm_name).layout.removeWidget(button)
-        button.deleteLater()
-
     def spawnLogout(self):
         power_cmd = "qdbus org.kde.LogoutPrompt /LogoutPrompt org.kde.LogoutPrompt.promptShutDown"
         self.exec(power_cmd)
@@ -136,26 +136,39 @@ class OverlayWindow(QMainWindow):
 
     def toggleDesktop(self):
         pid = self.exec("pkill plasmashell", status=True)
-        if not pid:
+        if not pid.returncode == 0:
             # threading.Thread(target=self.exec, args=(f"sudo -u pi plasmashell", False,)).start()
             self.exec("sudo -u pi plasmashell &", False)
 
     @pyqtSlot()
     def populateWindowsCont(self):
-        """Loop to check for new windows and add them to the 'Windows' container."""
-        self.cm.getContainer(self.wm_name).resetLayout()
-        windows = WindowManager().check_windows()
-        for window in windows:
-            if "plasma" in window["title"].lower(): continue
-            self.cm.getContainer(self.wm_name).createButton(
-                window["binary_name"], partial(self.killWindow, window["title"], window["pid"]),
-                self.gs.gray, self.gs.opacity)
-        self.cm.getContainer(self.wm_name).populateContainer()
+        def removeButton(button):
+            if button is not None and not sip.isdeleted(button):
+                container = self.cm.getContainer(self.wm_name)
+                container.removeWidget(button.objectName())
+                container.removeWidget("empty")
+                container.populateContainer()
+
+        container = self.cm.getContainer(self.wm_name)
+        container.resetLayout()
+        self.monitor_threads = []
+
+        for window in self.windows:
+            if "plasma" in window["title"].lower():
+                continue
+
+            button = container.createButton(
+                window["binary_name"], partial(self.exec, f"kill {window['pid']}"),
+                self.gs.gray, self.gs.opacity
+            )
+
+        container.populateContainer()
 
     def updateProfile(self):
         current_profile = self.exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
-        for i in range(self.cm.getContainer(self.nvpm_name).layout.count()):
-            button = self.cm.getContainer(self.nvpm_name).layout.itemAt(i).widget()
+        container = self.cm.getContainer(self.nvpm_name)
+        for i in range(container.layout.count()):
+            button = container.layout.itemAt(i).widget()
             if not isinstance(button, QPushButton):
                 continue
             if button.text().endswith(self.profile_append):
