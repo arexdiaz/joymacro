@@ -145,11 +145,11 @@ class OverlayWindow(QMainWindow):
         container.resetLayout()
         self.monitor_threads = []
 
-        for window in self.monitor_thread.windows:
+        for pid, window in self.monitor_thread.current_windows.items():
             if "plasma" in window["title"].lower():
                 continue
 
-            button = container.createButton(
+            container.createButton(
                 window["binary_name"], partial(self.exec, f"kill {window['pid']}"),
                 self.gs.gray, self.gs.opacity
             )
