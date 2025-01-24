@@ -6,6 +6,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 def _getPid(window_id):
     disp = display.Display()
     window = disp.create_resource_object("window", window_id)

@@ -54,6 +54,15 @@ class ContainerProp:
         inner_menu.setStyleSheet("background-color: transparent;")
         self.layout = QVBoxLayout(inner_menu)
 
+    def createLabel(self, text, font_size=12, bg_color="0,0,0", opacity=0, pos="top"):
+        label = QLabel(text)
+        label.setObjectName(text.lower().replace(" ", "_"))
+        label.setMinimumHeight(self.gs.elements_height)
+        label.setStyleSheet(self.gs.labelStyle(font_size, bg_color, opacity))
+        label.pos = pos
+        self.widgets[label.objectName()] = label
+        return label
+
     def createButton(self, label, callback, bg_color="0,0,0", opacity=0, pos="top"):
         button = QPushButton(label)
         button.setObjectName(label.lower().replace(" ", "_"))

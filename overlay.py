@@ -1,14 +1,14 @@
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton
-from PyQt6.QtCore import Qt, QMetaObject, QThread, pyqtSignal, pyqtSlot
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton, QLabel
+from PyQt6.QtCore import Qt, QMetaObject, QThread, pyqtSignal, QTimer, pyqtSlot
 from PyQt6 import sip
 from functools import partial
 from utils.container import ContainerManager, ContainerProp
+from utils.winmngr import WindowMonitorThread
 import logging
 import threading
 import subprocess
 import os
 import psutil
-from utils.winmngr import WindowMonitorThread
 
 logger = logging.getLogger("main")
 
@@ -76,9 +76,6 @@ class OverlayWindow(QMainWindow):
         background_widget.mousePressEvent = self.toggleVisibility
         self.initMenu()
 
-    def signalOnCreate(self, pid, window):
-        print(f"Window Created: {pid}, {window}")
-
     def toggleVisibility(self, event=None):
         if self.isVisible():
             self.last_active = None
@@ -120,7 +117,8 @@ class OverlayWindow(QMainWindow):
     def spawnLogout(self):
         power_cmd = "qdbus org.kde.LogoutPrompt /LogoutPrompt org.kde.LogoutPrompt.promptShutDown"
         self.exec(power_cmd)
-        self.toggleVisibility()
+        if self.isVisible():
+            self.toggleVisibility()
 
     def toggleService(self, service):
         button = self.sender()
@@ -275,7 +273,7 @@ class OverlayWindow(QMainWindow):
 
 
         '''Debug Stuff'''
-        self.cm.getContainer("debug_menu").createButton("toggle_desktop", self.toggleDesktop, self.gs.gray, self.gs.opacity)
+        # self.cm.getContainer("debug_menu").createButton("toggle_desktop", self.toggleDesktop, self.gs.gray, self.gs.opacity)
         self.cm.getContainer("debug_menu").createButton("debug_exit", self.closeApplication, self.gs.red, 0.35)
         
 
