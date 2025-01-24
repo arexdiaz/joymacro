@@ -12,7 +12,7 @@ def setLogConfig(name):
     file_handler.setFormatter(formatter)
 
     logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
     logger.addHandler(file_handler)
     logger.addHandler(handler)
     return logger

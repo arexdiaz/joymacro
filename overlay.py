@@ -46,14 +46,20 @@ class GlobalStyle():
         """
 
 class StatusThread(QThread):
-    battery_updated = pyqtSignal(str)
+    battery_updated = pyqtSignal()
 
     def run(self):
         while True:
-            battery = psutil.sensors_battery()
-            percent = battery.percent
-            self.battery_updated.emit(f"{percent}%")
+            self.battery_updated.emit()
             self.msleep(5000)
+
+class CPUThread(QThread):
+    cpu_updated = pyqtSignal()
+
+    def run(self):
+        while True:
+            self.cpu_updated.emit()
+            self.msleep(2000)
 
 class OverlayWindow(QMainWindow):
     def __init__(self, gs):
@@ -152,7 +158,7 @@ class OverlayWindow(QMainWindow):
 
     def addWindow(self, window):
         container = self.cm.getContainer(self.wm_name)
-        container.createButton(window["binary_name"], partial(self.exec, f"kill {window['pid']}"),
+        container.createButton(window["binary_name"], partial(self.exec, f"kill {window["pid"]}"),
                                self.gs.gray, self.gs.opacity)
         container.removeWidget("empty")
         container.populateContainer()
@@ -173,7 +179,7 @@ class OverlayWindow(QMainWindow):
             if "plasma" in window["title"].lower():
                 continue
 
-            container.createButton(window["binary_name"], partial(self.exec, f"kill {window['pid']}"),
+            container.createButton(window["binary_name"], partial(self.exec, f"kill {window["pid"]}"),
                 self.gs.gray, self.gs.opacity)
 
         container.populateContainer()
@@ -218,6 +224,13 @@ class OverlayWindow(QMainWindow):
                 f"{self.current_profile} | {int(battery_percent.percent)}% ({time_left})"
             )
 
+    def getCPUStatus(self):
+        cpu_usage = psutil.cpu_percent(percpu=True)
+        cpu_status = []
+        for i, usage in enumerate(cpu_usage):
+            cpu_status.append(f"CPU{i}: {usage}%")
+        for container in self.cm.containers.values():
+            container.getWidget("cpu_stats").widget().setText(" ".join(cpu_status))
     '''End Commands'''
 
 
@@ -238,10 +251,11 @@ class OverlayWindow(QMainWindow):
         primary_container.createContainer(self, self.width() - self.menu_width, 0, self.menu_width, \
                                            self.height(), self.gs.menu_color)
         self.cm.addContainer("Primary", primary_container)
-        self.cm.getContainer("Primary").createLabel("Da Overlay Menu", "title", 28)
-        self.cm.getContainer("Primary").createLabel(" ", "hwstat", 16)
-        self.cm.getContainer("Primary").createLabel(" ", "separator", 4, solid=True)
-
+        
+        primary = self.cm.getContainer("Primary")
+        primary.createLabel("Da Overlay Menu", "title", 28)
+        primary.createLabel(" ", "hwstat", 16)
+        primary.createLabel(" ", "separator", 4, solid=True)
         
         self.app_name = "Apps"
         self.toolbox_name = "Toolbox"
@@ -254,6 +268,9 @@ class OverlayWindow(QMainWindow):
         self.createSubcontainer(self.wm_name, primary_container, pos="bottom")
         if logger.getEffectiveLevel() == logging.DEBUG:
             self.createSubcontainer("debug_menu", primary_container)
+            self.cm.getContainer("debug_menu").createButton("toggle_desktop", self.toggleDesktop, self.gs.gray, self.gs.opacity)
+            self.cm.getContainer("debug_menu").createButton("debug_exit", self.closeApplication, self.gs.red, 0.35)
+        
 
         '''Services Stuff'''
         services = {
@@ -311,17 +328,14 @@ class OverlayWindow(QMainWindow):
         for label_text, app in apps.items():
             self.cm.getContainer(self.app_name).createButton(label_text, partial(self.launchApp, app), self.gs.gray, self.gs.opacity)
 
-
-        '''Debug Stuff'''
-        # self.cm.getContainer("debug_menu").createButton("toggle_desktop", self.toggleDesktop, self.gs.gray, self.gs.opacity)
-        self.cm.getContainer("debug_menu").createButton("debug_exit", self.closeApplication, self.gs.red, 0.35)
-        
-
         '''Primary Stuff'''
         brightness = self.exec("brightnessctl get").stdout.strip()
-        self.cm.getContainer("Primary").createSlider(self.setBrightness, "Brightness", value=int(brightness), min=1, max=255, pos="top")
-        self.cm.getContainer("Primary").createButton("Power Options", self.spawnLogout, self.gs.gray, self.gs.opacity, "bottom")
+        primary.createSlider(self.setBrightness, "Brightness", value=int(brightness), min=1, max=255, pos="top")
+        primary.createButton("Power Options", self.spawnLogout, self.gs.gray, self.gs.opacity, "bottom")
         
+        for container in self.cm.containers.values():
+            container.createLabel(" ", "cpu_stats", 12, pos="bottom")
+    
         '''Populate Menus'''
         self.cm.poulateAllContainers()
 
@@ -329,3 +343,7 @@ class OverlayWindow(QMainWindow):
         self.battery_thread = StatusThread()
         self.battery_thread.battery_updated.connect(self.getHWStatus)
         self.battery_thread.start()
+
+        self.cpu_thread = CPUThread()
+        self.cpu_thread.cpu_updated.connect(self.getCPUStatus)
+        self.cpu_thread.start()
