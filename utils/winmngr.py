@@ -1,5 +1,6 @@
 from PyQt6.QtCore import QThread, pyqtSignal
 from Xlib import X, display, Xatom
+import Xlib.error
 import subprocess, time
 import logging
 

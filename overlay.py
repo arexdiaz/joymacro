@@ -45,6 +45,15 @@ class GlobalStyle():
             }}
         """
 
+class StatusThread(QThread):
+    battery_updated = pyqtSignal(str)
+
+    def run(self):
+        while True:
+            battery = psutil.sensors_battery()
+            percent = battery.percent
+            self.battery_updated.emit(f"{percent}%")
+            self.msleep(5000)
 
 class OverlayWindow(QMainWindow):
     def __init__(self, gs):
@@ -84,6 +93,7 @@ class OverlayWindow(QMainWindow):
             self.setWindowFlags(self.flags | Qt.WindowType.WindowTransparentForInput)
             QApplication.processEvents()
         else:
+            self.getStatus()
             self.updateProfile()
             self.raise_()
             self.activateWindow()
@@ -185,6 +195,15 @@ class OverlayWindow(QMainWindow):
         self.exec(cmd)
         self.updateProfile()
 
+    def getStatus(self):
+        host_name = self.exec("hostname").stdout.strip()
+        battery_percent = psutil.sensors_battery().percent
+        local_ip = self.exec("hostname -I").stdout.strip().split()[0]
+        public_ip = self.exec("curl -s4 ifconfig.me").stdout.strip()
+        self.cm.getContainer("Primary").getWidget("hwstat").widget().setText(
+            f"wlan0: {local_ip} - public {public_ip}\nhost: {host_name}\nbattery: {int(battery_percent)}%")
+
+
     '''End Commands'''
 
 
@@ -203,6 +222,8 @@ class OverlayWindow(QMainWindow):
         primary_container.createContainer(self, self.width() - self.menu_width, 0, self.menu_width, \
                                            self.height(), self.gs.menu_color)
         self.cm.addContainer("Primary", primary_container)
+        self.cm.getContainer("Primary").createLabel("Da Overlay Menu", "title", 21)
+        self.cm.getContainer("Primary").createLabel(" ", "hwstat", 15)
         
         self.app_name = "Apps"
         self.toolbox_name = "Toolbox"
@@ -284,3 +305,8 @@ class OverlayWindow(QMainWindow):
         
         '''Populate Menus'''
         self.cm.poulateAllContainers()
+
+        # Start the battery update thread
+        self.battery_thread = StatusThread()
+        self.battery_thread.battery_updated.connect(self.getStatus)
+        self.battery_thread.start()
