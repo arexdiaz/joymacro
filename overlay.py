@@ -204,8 +204,10 @@ class OverlayWindow(QMainWindow):
 
     def getHWStatus(self):
         host_name = self.exec("hostname").stdout.strip()
-        local_ip = self.exec("hostname -I").stdout.strip().split()[0]
-        public_ip = self.exec("curl -s4 ifconfig.me").stdout.strip()
+        local_ip_obj = self.exec("hostname -I")
+        local_ip = local_ip_obj.stdout.strip().split(" ")[0] if local_ip_obj.returncode == 0 else "N/A"
+        public_ip_obj = self.exec("curl -s4 --max-time 1 ifconfig.me")
+        public_ip = public_ip_obj.stdout.strip() if public_ip_obj.returncode == 0 else "N/A"
         user = self.exec("whoami").stdout.strip()
 
         battery_percent = psutil.sensors_battery()
