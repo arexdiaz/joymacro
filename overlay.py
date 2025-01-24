@@ -93,7 +93,7 @@ class OverlayWindow(QMainWindow):
             self.setWindowFlags(self.flags | Qt.WindowType.WindowTransparentForInput)
             QApplication.processEvents()
         else:
-            self.getStatus()
+            self.getHWStatus()
             self.updateProfile()
             self.raise_()
             self.activateWindow()
@@ -190,19 +190,33 @@ class OverlayWindow(QMainWindow):
             if button.text().split(":")[0] == current_profile:
                 button.setText(f"{button.text()}{self.profile_append}")
 
-    def changeProfile(self, profile):
-        cmd = f"sudo /usr/sbin/nvpmodel -m {profile}"
+    def changeProfile(self, name, value):
+        cmd = f"sudo /usr/sbin/nvpmodel -m {value}"
+        self.current_profile = name
         self.exec(cmd)
         self.updateProfile()
 
-    def getStatus(self):
+    def getHWStatus(self):
         host_name = self.exec("hostname").stdout.strip()
-        battery_percent = psutil.sensors_battery().percent
         local_ip = self.exec("hostname -I").stdout.strip().split()[0]
         public_ip = self.exec("curl -s4 ifconfig.me").stdout.strip()
-        self.cm.getContainer("Primary").getWidget("hwstat").widget().setText(
-            f"wlan0: {local_ip} - public {public_ip}\nhost: {host_name}\nbattery: {int(battery_percent)}%")
+        user = self.exec("whoami").stdout.strip()
 
+        battery_percent = psutil.sensors_battery()
+        if battery_percent.secsleft == psutil.POWER_TIME_UNLIMITED:
+            time_left = "Charging"
+        elif battery_percent.secsleft == psutil.POWER_TIME_UNKNOWN:
+            time_left = "8"
+        else:
+            hours, remainder = divmod(battery_percent.secsleft, 3600)
+            minutes, _ = divmod(remainder, 60)
+            time_left = f"{(hours*-1)}h"
+
+        self.cm.getContainer("Primary").getWidget("hwstat").widget().setText(
+                f"{user}@{host_name}\n"\
+                f"ip: {local_ip} | pub: {public_ip}\n"\
+                f"{self.current_profile} | {int(battery_percent.percent)}% ({time_left})"
+            )
 
     '''End Commands'''
 
@@ -212,6 +226,8 @@ class OverlayWindow(QMainWindow):
         con = ContainerProp(self.height(), self.width(), self.gs)
         con.createContainer(self, self.width() - self.menu_width, 0, self.menu_width, \
                                            self.height(), self.gs.menu_color, visible=False)
+        con.createLabel(f"{label}", "header", 28)
+        con.createLabel(" ", "separator", 4, solid=True)
         con.createSubmenu(prim_con, "Back", self.gs.gray, self.gs.opacity)
         prim_con.createSubmenu(con, label, self.gs.gray, self.gs.opacity, pos)
 
@@ -222,8 +238,10 @@ class OverlayWindow(QMainWindow):
         primary_container.createContainer(self, self.width() - self.menu_width, 0, self.menu_width, \
                                            self.height(), self.gs.menu_color)
         self.cm.addContainer("Primary", primary_container)
-        self.cm.getContainer("Primary").createLabel("Da Overlay Menu", "title", 21)
-        self.cm.getContainer("Primary").createLabel(" ", "hwstat", 15)
+        self.cm.getContainer("Primary").createLabel("Da Overlay Menu", "title", 28)
+        self.cm.getContainer("Primary").createLabel(" ", "hwstat", 16)
+        self.cm.getContainer("Primary").createLabel(" ", "separator", 4, solid=True)
+
         
         self.app_name = "Apps"
         self.toolbox_name = "Toolbox"
@@ -258,7 +276,7 @@ class OverlayWindow(QMainWindow):
         '''Script Stuff'''
         self.nvpm_name = "OC Profile"
         self.createSubcontainer(self.nvpm_name, self.cm.getContainer(self.toolbox_name))
-        current_profile = self.exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
+        profile_value = self.exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
         self.profile_append = " ✓"
         self.profiles = {
             "0": "Console",
@@ -271,9 +289,10 @@ class OverlayWindow(QMainWindow):
         }
         for value, name in self.profiles.items():
             title = f"{value}: {name}"
-            if value == current_profile:
+            if value == profile_value:
                 title += self.profile_append
-            self.cm.getContainer(self.nvpm_name).createButton(title, partial(self.changeProfile, value))
+                self.current_profile = name
+            self.cm.getContainer(self.nvpm_name).createButton(title, partial(self.changeProfile, name, value))
 
 
         scripts = {
@@ -308,5 +327,5 @@ class OverlayWindow(QMainWindow):
 
         # Start the battery update thread
         self.battery_thread = StatusThread()
-        self.battery_thread.battery_updated.connect(self.getStatus)
+        self.battery_thread.battery_updated.connect(self.getHWStatus)
         self.battery_thread.start()

@@ -54,11 +54,13 @@ class ContainerProp:
         inner_menu.setStyleSheet("background-color: transparent;")
         self.layout = QVBoxLayout(inner_menu)
 
-    def createLabel(self, text, id, font_size=12, bg_color="0,0,0", opacity=0, pos="top"):
+    def createLabel(self, text, id, font_size=21, bg_color="0,0,0", opacity=0, pos="top", solid=False):
+        style = f"background-color: rgba({bg_color}, {opacity}); color: white; font-size: {font_size}px;"
         label = QLabel(text)
         label.setObjectName(id.lower().replace(" ", "_"))
         # label.setMinimumHeight(self.gs.elements_height)
-        label.setStyleSheet(f"background-color: rgba({bg_color}, {opacity}); color: white; font-size: {font_size}px;")
+        
+        label.setStyleSheet(style if not solid else f"{style} border-top: 2px solid gray;")
         label.pos = pos
         self.widgets[label.objectName()] = label
         return label
