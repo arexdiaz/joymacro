@@ -65,8 +65,9 @@ class AppThread(QThread):
     is_active = pyqtSignal()
 
     def run(self):
-        self.is_active.emit()
-        self.msleep(1000)
+        while True:
+            self.is_active.emit()
+            self.msleep(250)
 
 class OverlayWindow(QMainWindow):
     def __init__(self, gs):
@@ -126,12 +127,7 @@ class OverlayWindow(QMainWindow):
         return result
 
     def threadedExec(self, command):
-        threading.Thread(target=self.exec, args=(command,)).start()
-
-    def launchApp(self, name):
-        self.threadedExec(name)
-        if self.isVisible():
-            self.toggleVisibility()
+        threading.Thread(target=self.exec, args=(command,)).start()        
 
     def setBrightness(self):
         sender = self.sender()
@@ -273,15 +269,15 @@ class OverlayWindow(QMainWindow):
         primary.createLabel(" ", "hwstat", 16)
         primary.createLabel(" ", "separator", 4, solid=True)
         
-        self.app_name = "Apps"
+        self.app_name = "App Launcher"
         self.toolbox_name = "Toolbox"
         self.services_name = "Services"
-        self.wm_name = "Window Manager"
+        self.wm_name = "Active Windows"
         self.debug_name = "debug_menu"
+        self.createSubcontainer(self.wm_name, primary_container)
         self.createSubcontainer(self.app_name, primary_container)
-        self.createSubcontainer(self.toolbox_name, primary_container)
+        self.createSubcontainer(self.toolbox_name, primary_container, pos="bottom")
         self.createSubcontainer(self.services_name, self.cm.getContainer(self.toolbox_name))
-        self.createSubcontainer(self.wm_name, primary_container, pos="bottom")
         if logger.getEffectiveLevel() == logging.DEBUG:
             self.createSubcontainer("debug_menu", primary_container)
             self.cm.getContainer("debug_menu").createButton("toggle_desktop", self.toggleDesktop, self.gs.gray, self.gs.opacity)
@@ -344,7 +340,7 @@ class OverlayWindow(QMainWindow):
             "Konsole": "konsole",
         }
         for label_text, app in apps.items():
-            self.cm.getContainer(self.app_name).createButton(label_text, partial(self.launchApp, app), self.gs.gray, self.gs.opacity)
+            self.cm.getContainer(self.app_name).createButton(label_text, partial(self.threadedExec, app), self.gs.gray, self.gs.opacity)
 
         '''Primary Stuff'''
         brightness = self.exec("brightnessctl get").stdout.strip()
