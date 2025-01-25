@@ -333,7 +333,7 @@ class OverlayWindow(QMainWindow):
             "Link Cores": "/home/pi/scripts/link_cores.sh",
             "Update Overlay": "cd /home/pi/overlay && git pull"
         }
-        
+
         for label_text, script in scripts.items():
             self.cm.getContainer(self.toolbox_name).createButton(label_text, partial(self.threadedExec, script))
 
@@ -365,3 +365,7 @@ class OverlayWindow(QMainWindow):
         self.cpu_thread = CPUThread()
         self.cpu_thread.cpu_updated.connect(self.getCPUStatus)
         self.cpu_thread.start()
+
+        self.is_active = AppThread()
+        self.is_active.is_active.connect(self.isAppActive)
+        self.is_active.start()
