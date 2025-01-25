@@ -213,26 +213,22 @@ class OverlayWindow(QMainWindow):
 
     def getHWStatus(self):
         host_name = self.exec("hostname").stdout.strip()
-        local_ip_obj = self.exec("hostname -I")
-        local_ip = local_ip_obj.stdout.strip().split(" ")[0] if local_ip_obj.returncode == 0 else "N/A"
+        local_ip_obj = self.exec("hostname -I").stdout.strip().split()[0]
+        local_ip = local_ip_obj if local_ip_obj else "N/A"
         public_ip_obj = self.exec("curl -s4 --max-time 1 ifconfig.me")
         public_ip = public_ip_obj.stdout.strip() if public_ip_obj.returncode == 0 else "N/A"
         user = self.exec("whoami").stdout.strip()
 
         battery_percent = psutil.sensors_battery()
-        if battery_percent.secsleft == psutil.POWER_TIME_UNLIMITED:
-            time_left = "Charging"
-        elif battery_percent.secsleft == psutil.POWER_TIME_UNKNOWN:
-            time_left = "8"
+        if battery_percent.power_plugged:
+            battery_status = " (Charging)"
         else:
-            hours, remainder = divmod(battery_percent.secsleft, 3600)
-            minutes, _ = divmod(remainder, 60)
-            time_left = f"{(hours*-1)}h"
+            battery_status = ""
 
         self.cm.getContainer("Primary").getWidget("hwstat").widget().setText(
                 f"{user}@{host_name}\n"\
                 f"ip: {local_ip} | pub: {public_ip}\n"\
-                f"{self.current_profile} | {int(battery_percent.percent)}% ({time_left})"
+                f"{self.current_profile} | {int(battery_percent.percent)}%{battery_status}"
             )
 
     def getCPUStatus(self):
