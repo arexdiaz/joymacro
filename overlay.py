@@ -59,7 +59,14 @@ class CPUThread(QThread):
     def run(self):
         while True:
             self.cpu_updated.emit()
-            self.msleep(2000)
+            self.msleep(2500)
+
+class AppThread(QThread):
+    is_active = pyqtSignal()
+
+    def run(self):
+        self.is_active.emit()
+        self.msleep(1000)
 
 class OverlayWindow(QMainWindow):
     def __init__(self, gs):
@@ -233,6 +240,13 @@ class OverlayWindow(QMainWindow):
             cpu_status.append(f"CPU{i}: {usage}%")
         for container in self.cm.containers.values():
             container.getWidget("cpu_stats").widget().setText(" ".join(cpu_status))
+    
+    def isAppActive(self):
+        is_active = QApplication.activeWindow() == self
+        if not is_active and self.isVisible():
+            self.raise_()
+            self.activateWindow()
+        
     '''End Commands'''
 
 
@@ -316,8 +330,10 @@ class OverlayWindow(QMainWindow):
 
         scripts = {
             "Tmux Session": "tmux new-session -d -s simple",
-            "Link Cores": "/home/pi/scripts/link_cores.sh"
+            "Link Cores": "/home/pi/scripts/link_cores.sh",
+            "Update Overlay": "cd /home/pi/overlay && git pull"
         }
+        
         for label_text, script in scripts.items():
             self.cm.getContainer(self.toolbox_name).createButton(label_text, partial(self.threadedExec, script))
 
