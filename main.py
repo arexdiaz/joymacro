@@ -54,15 +54,11 @@ class Main:
 
     def macros(self):
         btn, axi, hat = self.states
+        visib = {8, 7, 15}
 
-        if {self.btn_mapping[11]}.issubset(btn) and not self.is_gpio_read:
-            logging.debug("Grabbing GPIO")
-            self.ev_gpio.device.grab()
-            self.is_gpio_read = True
-        elif self.is_gpio_read and not {self.btn_mapping[11]}.issubset(btn):
-            logging.debug("Ungrabbing GPIO")
-            self.ev_gpio.device.ungrab()
-            self.is_gpio_read = False
+        if btn == {8, 7, 15}:
+            logging.debug("Toggling visibility")
+            self.overlay.toggleVisibility()
 
         if self.is_joymouse and self.btn_mapping[4] in btn:
             logging.debug("Joymouse: OFF")
@@ -73,28 +69,7 @@ class Main:
             logging.debug("Joymouse: ON")
             self.is_joymouse = True
 
-        if not self.is_joymouse and btn == {8, 7, 15}:
-            logging.debug("Toggling visibility")
-            self.overlay.toggleVisibility()
-
-    def gpio_macros(self):
-        btn, axi, hat = self.states
-        if {self.btn_mapping[11]}.issubset(btn) and self.ev_gpio.held_buttons == 115:
-            subprocess.run("xdotool key XF86MonBrightnessUp".split(" "), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            logging.debug("brightness add")
-
-        elif {self.btn_mapping[11]}.issubset(btn) and self.ev_gpio.held_buttons == 114:
-            subprocess.run("xdotool key XF86MonBrightnessDown".split(" "), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            logging.debug("brightness sub")
-
-
     def loop(self):
-        def read_gpio_events():
-            for event in self.ev_gpio.device.read_loop():
-                self.ev_gpio.held_buttons = self.ev_gpio.key_lstnr(event)
-                logging.debug(f"GPIO: {event}")
-                self.gpio_macros()
-
         def read_sdl_events():
             prev_len_state = 0
             while True:
