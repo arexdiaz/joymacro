@@ -172,6 +172,12 @@ class OverlayWindow(QMainWindow):
         container.removeWidget("empty")
         container.populateContainer()
 
+    def killProc(self, pid):
+        self.exec(f"kill {pid}")
+        sender = self.sender()
+        sender.clicked.disconnect()
+        sender.clicked.connect(partial(self.exec, f"kill -9 {pid}"))
+
     @pyqtSlot()
     def populateWindowsCont(self):
         container = self.cm.getContainer(self.wm_name)
