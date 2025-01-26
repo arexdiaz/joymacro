@@ -1,6 +1,7 @@
 import logging
 import netifaces
 import requests
+import threading
 import subprocess
 
 logger = logging.getLogger("main")
@@ -8,6 +9,15 @@ logger = logging.getLogger("main")
 
 
 '''Commands go here'''
+def exec(command):
+    result = subprocess.run(command, capture_output=True, shell=True, text=True)
+    logger.error(f"{command}: {result.stderr.strip()}") if result.returncode != 0 else None
+    return result
+
+def threadedExec(command):
+    threading.Thread(target=exec, args=(command,)).start()        
+
+
 def get_private_ip(interface='wlp1s0'):
     try:
         addresses = netifaces.ifaddresses(interface)

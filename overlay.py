@@ -124,31 +124,23 @@ class OverlayWindow(QMainWindow):
         os._exit(0)
 
     '''Commands go here'''
-    def exec(self, command):
-        result = subprocess.run(command, capture_output=True, shell=True, text=True)
-        logger.error(f"{command}: {result.stderr.strip()}") if result.returncode != 0 else None
-        return result
-
-    def threadedExec(self, command):
-        threading.Thread(target=self.exec, args=(command,)).start()        
-
     def setBrightness(self):
         sender = self.sender()
-        self.exec(f"brightnessctl --quiet set {sender.value()}")
+        cmd.exec(f"brightnessctl --quiet set {sender.value()}")
 
     def spawnLogout(self):
         power_cmd = "qdbus org.kde.LogoutPrompt /LogoutPrompt org.kde.LogoutPrompt.promptShutDown"
-        self.exec(power_cmd)
+        cmd.exec(power_cmd)
         if self.isVisible():
             self.toggleVisibility()
 
     def toggleService(self, service):
         button = self.sender()
         label, status = button.text().split(":")
-        service_status = self.exec(f"systemctl is-active --quiet {service}").returncode == 0
+        service_status = cmd.exec(f"systemctl is-active --quiet {service}").returncode == 0
         action = "stop" if service_status else "start"
 
-        self.exec(f"systemctl {action} {service}")
+        cmd.exec(f"systemctl {action} {service}")
 
         button_state, button_color = ["OFF", self.gs.gray] if service_status else \
                                      ["ON", self.gs.green]
@@ -157,22 +149,29 @@ class OverlayWindow(QMainWindow):
         button.setStyleSheet(self.gs.buttonStyle(button_color, self.gs.button_font_size, self.gs.opacity))
 
     def toggleDesktop(self):
-        pid = self.exec("pkill plasmashell", status=True)
+        pid = cmd.exec("pkill plasmashell", status=True)
         if not pid.returncode == 0:
-            # threading.Thread(target=self.exec, args=(f"sudo -u pi plasmashell", False,)).start()
-            self.exec("sudo -u pi plasmashell &", False)
+            # threading.Thread(target=cmd.exec, args=(f"sudo -u pi plasmashell", False,)).start()
+            cmd.exec("sudo -u pi plasmashell &", False)
 
-    def killProc(self, pid):
-        self.exec(f"kill {pid}")
+    def killProc(self, window, force=False):
+        cmd_string = "kill" if not force else "kill -9"
         sender = self.sender()
-        sender.clicked.disconnect()
-        sender.clicked.connect(partial(self.exec, f"kill -9 {pid}"))
-        sender.setText(f"{sender.text()} (Force)")
+        
+        result = cmd.exec(f"{cmd_string} {window['pid']}")
+
+        if not force:
+            sender.clicked.disconnect()
+            sender.clicked.connect(partial(self.killProc, window, force=True))
+            sender.setText(f"{sender.text()} (SIGKILL)")
+            return
+
+        if not result.returncode == 0:
+            self.removeWindow(window) # If button is not removed after sigkill, refactor this
 
     def addWindow(self, window):
         container = self.cm.getContainer(self.wm_name)
-        container.createButton(window["binary_name"], partial(self.killProc, window["pid"]),
-                               self.gs.gray, self.gs.opacity)
+        container.createButton(window["binary_name"], partial(self.killProc, window))
         container.removeWidget("empty")
         container.populateContainer()
     
@@ -183,7 +182,7 @@ class OverlayWindow(QMainWindow):
         container.populateContainer()
 
     def updateProfile(self):
-        current_profile = self.exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
+        current_profile = cmd.exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
         container = self.cm.getContainer(self.nvpm_name)
         for i in range(container.layout.count()):
             button = container.layout.itemAt(i).widget()
@@ -197,7 +196,7 @@ class OverlayWindow(QMainWindow):
     def changeProfile(self, name, value):
         cmd = f"sudo /usr/sbin/nvpmodel -m {value}"
         self.current_profile = name
-        self.exec(cmd)
+        cmd.exec(cmd)
         self.updateProfile()
 
     def getHWStatus(self):
@@ -207,8 +206,8 @@ class OverlayWindow(QMainWindow):
             self.private_ip = cmd.get_private_ip()
             self.public_ip = cmd.get_public_ip()
 
-        host_name = self.exec("hostname").stdout.strip()
-        user = self.exec("whoami").stdout.strip()
+        host_name = cmd.exec("hostname").stdout.strip()
+        user = cmd.exec("whoami").stdout.strip()
 
         battery_percent = psutil.sensors_battery()
         if battery_percent.power_plugged:
@@ -285,10 +284,10 @@ class OverlayWindow(QMainWindow):
         }
 
         for label_text, service in services.items():
-            service_exist = self.exec(f"systemctl show {service} --no-page --property=LoadState")
+            service_exist = cmd.exec(f"systemctl show {service} --no-page --property=LoadState")
             if service_exist.stdout.strip() == "LoadState=not-found":
                 continue
-            status = self.exec(f"systemctl is-active --quiet {service}").returncode == 0
+            status = cmd.exec(f"systemctl is-active --quiet {service}").returncode == 0
             service_state, bg_color = ["ON", self.gs.green] if status else ["OFF", self.gs.gray]
             self.cm.getContainer(self.services_name).createButton(f"{label_text}: {service_state}", \
                                        partial(self.toggleService, service), \
@@ -298,7 +297,7 @@ class OverlayWindow(QMainWindow):
         '''Script Stuff'''
         self.nvpm_name = "OC Profile"
         self.createSubcontainer(self.nvpm_name, self.cm.getContainer(self.toolbox_name))
-        profile_value = self.exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
+        profile_value = cmd.exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
         self.profile_append = " ✓"
         self.profiles = {
             "0": "Console",
@@ -324,7 +323,7 @@ class OverlayWindow(QMainWindow):
         }
 
         for label_text, script in scripts.items():
-            self.cm.getContainer(self.toolbox_name).createButton(label_text, partial(self.threadedExec, script))
+            self.cm.getContainer(self.toolbox_name).createButton(label_text, partial(cmd.threadedExec, script))
 
 
         '''Apps Stuff'''                             
@@ -333,10 +332,10 @@ class OverlayWindow(QMainWindow):
             "Konsole": "konsole",
         }
         for label_text, app in apps.items():
-            self.cm.getContainer(self.app_name).createButton(label_text, partial(self.threadedExec, app), self.gs.gray, self.gs.opacity)
+            self.cm.getContainer(self.app_name).createButton(label_text, partial(cmd.threadedExec, app))
 
         '''Primary Stuff'''
-        brightness = self.exec("brightnessctl get").stdout.strip()
+        brightness = cmd.exec("brightnessctl get").stdout.strip()
         primary.createSlider(self.setBrightness, "Brightness", value=int(brightness), min=1, max=255, pos="top")
         primary.createButton("Power Options", self.spawnLogout, self.gs.gray, self.gs.opacity, "bottom")
         
