@@ -36,11 +36,11 @@ class GlobalStyle():
                 border-bottom: 2px solid gray;
                 border-radius: 0px;
             }}
-            
+
             QPushButton:hover {{
                 background-color: rgba(255, 255, 255, 0.1);  /* Light transparent overlay on hover */
             }}
-            
+
             QPushButton:pressed {{
                 background-color: rgba(255, 255, 255, 0.2);  /* Slightly darker overlay when pressed */
             }}
@@ -162,9 +162,15 @@ class OverlayWindow(QMainWindow):
             # threading.Thread(target=self.exec, args=(f"sudo -u pi plasmashell", False,)).start()
             self.exec("sudo -u pi plasmashell &", False)
 
+    def killProc(self, pid):
+        self.exec(f"kill {pid}")
+        sender = self.sender()
+        sender.clicked.disconnect()
+        sender.clicked.connect(partial(self.exec, f"kill -9 {pid}"))
+
     def addWindow(self, window):
         container = self.cm.getContainer(self.wm_name)
-        container.createButton(window["binary_name"], partial(self.exec, f"kill {window["pid"]}"),
+        container.createButton(window["binary_name"], partial(self.killProc, window["pid"]),
                                self.gs.gray, self.gs.opacity)
         container.removeWidget("empty")
         container.populateContainer()
@@ -173,27 +179,6 @@ class OverlayWindow(QMainWindow):
         container = self.cm.getContainer(self.wm_name)
         container.removeWidget(window["binary_name"].lower().replace(" ", "_"))
         container.removeWidget("empty")
-        container.populateContainer()
-
-    def killProc(self, pid):
-        self.exec(f"kill {pid}")
-        sender = self.sender()
-        sender.clicked.disconnect()
-        sender.clicked.connect(partial(self.exec, f"kill -9 {pid}"))
-
-    @pyqtSlot()
-    def populateWindowsCont(self):
-        container = self.cm.getContainer(self.wm_name)
-        container.resetLayout()
-        self.monitor_threads = []
-
-        for pid, window in self.monitor_thread.current_windows.items():
-            if "plasma" in window["title"].lower():
-                continue
-
-            container.createButton(window["binary_name"], partial(self.exec, f"kill {window["pid"]}"),
-                self.gs.gray, self.gs.opacity)
-
         container.populateContainer()
 
     def updateProfile(self):
