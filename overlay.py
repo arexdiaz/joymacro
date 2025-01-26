@@ -9,6 +9,7 @@ import threading
 import subprocess
 import os
 import psutil
+import utils.commands as cmd
 
 logger = logging.getLogger("main")
 
@@ -75,6 +76,8 @@ class OverlayWindow(QMainWindow):
         self.gs = gs
         self.last_active = None
         self.initUI()
+
+        self.essid = None
 
         self.monitor_thread = WindowMonitorThread()
         self.monitor_thread.on_window_create.connect(self.addWindow)
@@ -212,11 +215,13 @@ class OverlayWindow(QMainWindow):
         self.updateProfile()
 
     def getHWStatus(self):
+        essid = cmd.get_essid()
+        if essid != self.essid:
+            self.essid = essid
+            self.private_ip = cmd.get_private_ip()
+            self.public_ip = cmd.get_public_ip()
+
         host_name = self.exec("hostname").stdout.strip()
-        local_ip_obj = self.exec("hostname -I").stdout.strip().split()[0]
-        local_ip = local_ip_obj if local_ip_obj else "N/A"
-        public_ip_obj = self.exec("curl -s4 --max-time 1 ifconfig.me")
-        public_ip = public_ip_obj.stdout.strip() if public_ip_obj.returncode == 0 else "N/A"
         user = self.exec("whoami").stdout.strip()
 
         battery_percent = psutil.sensors_battery()
@@ -227,7 +232,7 @@ class OverlayWindow(QMainWindow):
 
         self.cm.getContainer("Primary").getWidget("hwstat").widget().setText(
                 f"{user}@{host_name}\n"\
-                f"ip: {local_ip} | pub: {public_ip}\n"\
+                f"ip: {self.private_ip} | pub: {self.public_ip}\n"\
                 f"{self.current_profile} | {int(battery_percent.percent)}%{battery_status}"
             )
 
