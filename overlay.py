@@ -167,6 +167,7 @@ class OverlayWindow(QMainWindow):
         sender = self.sender()
         sender.clicked.disconnect()
         sender.clicked.connect(partial(self.exec, f"kill -9 {pid}"))
+        sender.setText(f"{sender.text()} (Force)")
 
     def addWindow(self, window):
         container = self.cm.getContainer(self.wm_name)
