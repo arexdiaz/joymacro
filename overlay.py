@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton, QLabel
-from PyQt6.QtCore import Qt, QMetaObject, QThread, pyqtSignal, QTimer, pyqtSlot
+from PyQt6.QtCore import Qt, QMetaObject, QThread, pyqtSignal, QDate, QTime, pyqtSlot
 from PyQt6 import sip
 from functools import partial
 from utils.container import ContainerManager, ContainerProp
@@ -201,6 +201,8 @@ class OverlayWindow(QMainWindow):
 
     def getHWStatus(self):
         essid = cmd.get_essid()
+        current_time = QTime.currentTime().toString("h:mm AP")
+        current_date = QDate.currentDate().toString("MMM dd")
         if essid != self.essid:
             self.essid = essid
             self.private_ip = cmd.get_private_ip()
@@ -216,9 +218,10 @@ class OverlayWindow(QMainWindow):
             battery_status = ""
 
         self.cm.getContainer("Primary").getWidget("hwstat").widget().setText(
+                f"{current_date} {current_time}\n"\
                 f"{user}@{host_name}\n"\
-                f"ip: {self.private_ip} | pub: {self.public_ip}\n"\
-                f"{self.current_profile} | {int(battery_percent.percent)}%{battery_status}"
+                f"ip: {self.private_ip} pub: {self.public_ip}\n"\
+                f"{self.current_profile} {int(battery_percent.percent)}%{battery_status}"
             )
 
     def getCPUStatus(self):

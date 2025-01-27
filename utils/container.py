@@ -58,7 +58,6 @@ class ContainerProp:
         style = f"background-color: rgba({bg_color}, {opacity}); color: white; font-size: {font_size}px;"
         label = QLabel(text)
         label.setObjectName(id.lower().replace(" ", "_"))
-        
         label.setStyleSheet(style if not solid else f"{style} border-top: 2px solid gray;")
         label.pos = pos
         self.widgets[label.objectName()] = label
