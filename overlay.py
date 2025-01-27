@@ -194,9 +194,9 @@ class OverlayWindow(QMainWindow):
                 button.setText(f"{button.text()}{self.profile_append}")
 
     def changeProfile(self, name, value):
-        cmd = f"sudo /usr/sbin/nvpmodel -m {value}"
+        cmd_str = f"sudo /usr/sbin/nvpmodel -m {value}"
         self.current_profile = name
-        cmd.exec(cmd)
+        cmd.exec(cmd_str)
         self.updateProfile()
 
     def getHWStatus(self):
