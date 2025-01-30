@@ -283,7 +283,9 @@ class OverlayWindow(QMainWindow):
         services = {
             "FTP": "vsftpd",
             "SecureShell": "ssh.socket",
-            "Samba Share": "smbd"
+            "Samba Share": "smbd",
+            "Bluetooth": "bluetooth.service",
+            "WiFi": "wpa_supplicant.service",
         }
 
         for label_text, service in services.items():
@@ -322,7 +324,8 @@ class OverlayWindow(QMainWindow):
         scripts = {
             "Tmux Session": "tmux new-session -d -s simple",
             "Link Cores": "/home/pi/scripts/link_cores.sh",
-            "Update Overlay": "cd /home/pi/overlay && git pull"
+            "Update Overlay": "cd /home/pi/overlay && git fetch && git pull",
+            "Restart Joycond": "systemctl restart joycond.service"
         }
 
         for label_text, script in scripts.items():
