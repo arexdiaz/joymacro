@@ -158,7 +158,7 @@ class OverlayWindow(QMainWindow):
         cmd_string = "kill" if not force else "kill -9"
         sender = self.sender()
         
-        result = cmd.exec(f"{cmd_string} {window['pid']}")
+        result = cmd.exec(f"{cmd_string} {window["pid"]}")
 
         if not force:
             sender.clicked.disconnect()
@@ -166,20 +166,18 @@ class OverlayWindow(QMainWindow):
             sender.setText(f"{sender.text()} (SIGKILL)")
             return
 
-        if not result.returncode == 0:
-            self.removeWindow(window) # If button is not removed after sigkill, refactor this
+        self.removeWindow(window) # If button is not removed after sigkill, refactor this
 
     def addWindow(self, window):
-        container = self.cm.getContainer(self.wm_name)
-        container.createButton(window["binary_name"], partial(self.killProc, window))
-        container.removeWidget("empty")
-        container.populateContainer()
+        self.winman_container.createButton(f"{window["binary_name"]}[{window["pid"]}]", partial(self.killProc, window))
+        self.createSubcontainer({window["binary_name"]}[{window["pid"]}], self.winman_container)
+        self.winman_container.removeWidget("empty")
+        self.winman_container.populateContainer()
     
     def removeWindow(self, window):
-        container = self.cm.getContainer(self.wm_name)
-        container.removeWidget(window["binary_name"].lower().replace(" ", "_"))
-        container.removeWidget("empty")
-        container.populateContainer()
+        self.winman_container.removeWidget(f"{window["binary_name"]}: {window["pid"]}".lower().replace(" ", "_"))
+        self.winman_container.removeWidget("empty")
+        self.winman_container.populateContainer()
 
     def updateProfile(self):
         current_profile = cmd.exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
@@ -252,6 +250,7 @@ class OverlayWindow(QMainWindow):
         prim_con.createSubmenu(con, label, self.gs.gray, self.gs.opacity, pos)
 
         self.cm.addContainer(label, con)
+        return self.getContainer(label)
 
     def initMenu(self):
         primary_container = ContainerProp(self.height(), self.width(), self.gs)
@@ -266,17 +265,19 @@ class OverlayWindow(QMainWindow):
         
         self.app_name = "App Launcher"
         self.toolbox_name = "Toolbox"
+        self.nvpm_name = "OC Profile"
         self.services_name = "Services"
         self.wm_name = "Active Windows"
         self.debug_name = "debug_menu"
-        self.createSubcontainer(self.wm_name, primary_container)
-        self.createSubcontainer(self.app_name, primary_container)
-        self.createSubcontainer(self.toolbox_name, primary_container, pos="bottom")
-        self.createSubcontainer(self.services_name, self.cm.getContainer(self.toolbox_name))
+        self.winman_container = self.createSubcontainer(self.wm_name, primary_container)
+        launcher_container = self.createSubcontainer(self.app_name, primary_container)
+        toolbox_container = self.createSubcontainer(self.toolbox_name, primary_container, pos="bottom")
+        self.profile_container = self.createSubcontainer(self.nvpm_name, toolbox_container)
+        services_container = self.createSubcontainer(self.services_name, toolbox_container)
         if logger.getEffectiveLevel() == logging.DEBUG:
-            self.createSubcontainer("debug_menu", primary_container)
-            self.cm.getContainer("debug_menu").createButton("toggle_desktop", self.toggleDesktop, self.gs.gray, self.gs.opacity)
-            self.cm.getContainer("debug_menu").createButton("debug_exit", self.closeApplication, self.gs.red, 0.35)
+            debug_container = self.createSubcontainer("debug_menu", primary_container)
+            debug_container.createButton("toggle_desktop", self.toggleDesktop, self.gs.gray, self.gs.opacity)
+            debug_container.createButton("debug_exit", self.closeApplication, self.gs.red, 0.35)
         
 
         '''Services Stuff'''
@@ -294,14 +295,12 @@ class OverlayWindow(QMainWindow):
                 continue
             status = cmd.exec(f"systemctl is-active --quiet {service}").returncode == 0
             service_state, bg_color = ["ON", self.gs.green] if status else ["OFF", self.gs.gray]
-            self.cm.getContainer(self.services_name).createButton(f"{label_text}: {service_state}", \
+            sservices_container.createButton(f"{label_text}: {service_state}", \
                                        partial(self.toggleService, service), \
                                        bg_color, self.gs.opacity)
                                        
                                        
         '''Script Stuff'''
-        self.nvpm_name = "OC Profile"
-        self.createSubcontainer(self.nvpm_name, self.cm.getContainer(self.toolbox_name))
         profile_value = cmd.exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
         self.profile_append = " ✓"
         self.profiles = {
@@ -318,7 +317,7 @@ class OverlayWindow(QMainWindow):
             if value == profile_value:
                 title += self.profile_append
                 self.current_profile = name
-            self.cm.getContainer(self.nvpm_name).createButton(title, partial(self.changeProfile, name, value))
+            profile_container.createButton(title, partial(self.changeProfile, name, value))
 
 
         scripts = {
@@ -329,7 +328,7 @@ class OverlayWindow(QMainWindow):
         }
 
         for label_text, script in scripts.items():
-            self.cm.getContainer(self.toolbox_name).createButton(label_text, partial(cmd.threadedExec, script))
+            toolbox_container.createButton(label_text, partial(cmd.threadedExec, script))
 
 
         '''Apps Stuff'''                             
@@ -338,7 +337,7 @@ class OverlayWindow(QMainWindow):
             "Konsole": "konsole",
         }
         for label_text, app in apps.items():
-            self.cm.getContainer(self.app_name).createButton(label_text, partial(cmd.threadedExec, app))
+           launcher_container.createButton(label_text, partial(cmd.threadedExec, app))
 
         '''Primary Stuff'''
         brightness = cmd.exec("brightnessctl get").stdout.strip()
