@@ -170,7 +170,12 @@ class OverlayWindow(QMainWindow):
 
     def addWindow(self, window):
         self.winman_container.createButton(f"{window["binary_name"]}[{window["pid"]}]", partial(self.killProc, window))
-        self.createSubcontainer({window["binary_name"]}[{window["pid"]}], self.winman_container)
+        sub = self.createSubcontainer({window["binary_name"]}[{window["pid"]}], self.winman_container)
+        sub.createButton("Fullscreen", partial(cmd.exec, f"wmctrl -i -r {window["window_id"]} -b toggle,fullscreen"))
+        sub.createButton("Maximize", partial(cmd.exec, f"wmctrl -i -r {window["window_id"]} -b toggle,maximized_vert,maximized_horz"))
+        sub.createButton("Minimize", partial(cmd.exec, f"wmctrl -i -r {window["window_id"]} -b toggle,hidden"))
+        sub.createButton("Close", partial(self.killProc, window))
+        sub.populateContainer()
         self.winman_container.removeWidget("empty")
         self.winman_container.populateContainer()
     
@@ -181,9 +186,8 @@ class OverlayWindow(QMainWindow):
 
     def updateProfile(self):
         current_profile = cmd.exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
-        container = self.cm.getContainer(self.nvpm_name)
-        for i in range(container.layout.count()):
-            button = container.layout.itemAt(i).widget()
+        for i in range(self.profile_container.layout.count()):
+            button = self.profile_container.layout.itemAt(i).widget()
             if not isinstance(button, QPushButton):
                 continue
             if button.text().endswith(self.profile_append):
