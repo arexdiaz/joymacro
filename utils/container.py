@@ -91,7 +91,7 @@ class ContainerProp:
 
     def switchContainer(self, sndContainer):
         self.container.setVisible(False)
-        sndContainer.setVisible(True)
+        sndContainer.container.setVisible(True)
 
     def createSlider(self, callback, label, value=0, min=0, max=100, pos="top"):
         slider = QSlider(Qt.Orientation.Horizontal)
