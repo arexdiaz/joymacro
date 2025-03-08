@@ -179,10 +179,8 @@ class OverlayWindow(QMainWindow):
         self.winman_container.populateContainer()
     
     def removeWindow(self, window):
-        self.winman_container.removeWidget(f"{window["binary_name"]}[{window["pid"]}]")
+        self.winman_container.switchContainer()
         self.cm.deleteContainer(f"{window["binary_name"]}[{window["pid"]}]")
-        self.winman_container.removeWidget("empty")
-        self.winman_container.populateContainer()
 
     def updateProfile(self):
         current_profile = cmd.exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
@@ -253,7 +251,8 @@ class OverlayWindow(QMainWindow):
                                            self.height(), self.gs.menu_color, visible=False)
         con.createLabel(f"{label}", "header", 28)
         con.createLabel(" ", "separator", 4, solid=True)
-        con.createSubmenu(prim_con, "Back", self.gs.gray, self.gs.opacity)
+        con.createSubmenu("Back", self.gs.gray, self.gs.opacity)
+        con.parent = prim_con
         prim_con.createSubmenu(con, label, self.gs.gray, self.gs.opacity, pos)
 
         self.cm.addContainer(label, con)
