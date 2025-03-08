@@ -179,8 +179,10 @@ class OverlayWindow(QMainWindow):
         self.winman_container.populateContainer()
     
     def removeWindow(self, window):
-        self.winman_container.switchContainer(self.winman_container.parent)
-        self.cm.deleteContainer(f"{window["binary_name"]}[{window["pid"]}]")
+        window_name = f"{window["binary_name"]}[{window["pid"]}]"
+        self.cm.getContainer(window_name).switchContainer(self.winman_container.parent)
+        self.winman_container.removeWidget(window_name)
+        self.cm.deleteContainer(window_name)
 
     def updateProfile(self):
         current_profile = cmd.exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
