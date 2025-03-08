@@ -79,19 +79,19 @@ class ContainerProp:
         self.widgets[button.objectName()] = button
         return button
     
-    def createSubmenu(self, label, bg_color="0,0,0", opacity=0, pos="top"):
+    def createSubmenu(self, container, label, bg_color="0,0,0", opacity=0, pos="top"):
         button = QPushButton(label)
         button.setMinimumHeight(self.gs.elements_height)
-        button.clicked.connect(self.switchContainer)
+        button.clicked.connect(partial(self.switchContainer, container))
         button.pos = pos
         button.setObjectName(label.lower().replace(" ", "_"))
 
         button.setStyleSheet(self.gs.buttonStyle(bg_color, self.gs.button_font_size, opacity))
         self.widgets[button.objectName()] = button
 
-    def switchContainer(self):
+    def switchContainer(self, sndContainer):
         self.container.setVisible(False)
-        self.parent.container.setVisible(True)
+        sndContainer.setVisible(True)
 
     def createSlider(self, callback, label, value=0, min=0, max=100, pos="top"):
         slider = QSlider(Qt.Orientation.Horizontal)
