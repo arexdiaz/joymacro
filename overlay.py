@@ -169,7 +169,7 @@ class OverlayWindow(QMainWindow):
         self.removeWindow(window) # If button is not removed after sigkill, refactor this
 
     def addWindow(self, window):
-        sub = self.createSubcontainer({window["binary_name"]}[{window["pid"]}], self.winman_container)
+        sub = self.createSubcontainer(f"{window["binary_name"]}[{window["pid"]}]", self.winman_container)
         sub.createButton("Fullscreen", partial(cmd.exec, f"wmctrl -i -r {window["window_id"]} -b toggle,fullscreen"))
         sub.createButton("Maximize", partial(cmd.exec, f"wmctrl -i -r {window["window_id"]} -b toggle,maximized_vert,maximized_horz"))
         sub.createButton("Minimize", partial(cmd.exec, f"wmctrl -i -r {window["window_id"]} -b toggle,hidden"))
