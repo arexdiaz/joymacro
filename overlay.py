@@ -277,7 +277,7 @@ class OverlayWindow(QMainWindow):
         wm_name = "Active Windows"
         debug_name = "debug_menu"
 
-        winman_container = self.createSubcontainer(wm_name, primary_container)
+        self.winman_container = self.createSubcontainer(wm_name, primary_container)
         launcher_container = self.createSubcontainer(app_name, primary_container)
         toolbox_container = self.createSubcontainer(toolbox_name, primary_container, pos="bottom")
         self.profile_container = self.createSubcontainer(nvpm_name, toolbox_container)
