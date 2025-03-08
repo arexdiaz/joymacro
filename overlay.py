@@ -179,7 +179,7 @@ class OverlayWindow(QMainWindow):
         self.winman_container.populateContainer()
     
     def removeWindow(self, window):
-        self.winman_container.switchContainer()
+        self.winman_container.switchContainer(self.winman_container.parent)
         self.cm.deleteContainer(f"{window["binary_name"]}[{window["pid"]}]")
 
     def updateProfile(self):
