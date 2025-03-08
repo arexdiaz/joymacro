@@ -253,7 +253,7 @@ class OverlayWindow(QMainWindow):
         prim_con.createSubmenu(con, label, self.gs.gray, self.gs.opacity, pos)
 
         self.cm.addContainer(label, con)
-        return self.getContainer(label)
+        return self.cm.getContainer(label)
 
     def initMenu(self):
         primary_container = ContainerProp(self.height(), self.width(), self.gs)
