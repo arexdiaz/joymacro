@@ -180,7 +180,7 @@ class OverlayWindow(QMainWindow):
     
     def removeWindow(self, window):
         self.winman_container.removeWidget(f"{window["binary_name"]}[{window["pid"]}]")
-        self.cm.deleteContainer("{window["binary_name"]}[{window["pid"]}]")
+        self.cm.deleteContainer(f"{window["binary_name"]}[{window["pid"]}]")
         self.winman_container.removeWidget("empty")
         self.winman_container.populateContainer()
 
@@ -277,11 +277,11 @@ class OverlayWindow(QMainWindow):
         wm_name = "Active Windows"
         debug_name = "debug_menu"
 
-        winman_container = self.createSubcontainer(self.wm_name, primary_container)
-        launcher_container = self.createSubcontainer(self.app_name, primary_container)
-        toolbox_container = self.createSubcontainer(self.toolbox_name, primary_container, pos="bottom")
-        self.profile_container = self.createSubcontainer(self.nvpm_name, toolbox_container)
-        services_container = self.createSubcontainer(self.services_name, toolbox_container)
+        winman_container = self.createSubcontainer(wm_name, primary_container)
+        launcher_container = self.createSubcontainer(app_name, primary_container)
+        toolbox_container = self.createSubcontainer(toolbox_name, primary_container, pos="bottom")
+        self.profile_container = self.createSubcontainer(nvpm_name, toolbox_container)
+        services_container = self.createSubcontainer(services_name, toolbox_container)
         if logger.getEffectiveLevel() == logging.DEBUG:
             debug_container = self.createSubcontainer(debug_name, primary_container)
             debug_container.createButton("toggle_desktop", self.toggleDesktop, self.gs.gray, self.gs.opacity)
