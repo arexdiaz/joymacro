@@ -172,7 +172,7 @@ class OverlayWindow(QMainWindow):
         sub = self.createSubcontainer(f"{window["binary_name"]}[{window["pid"]}]", self.winman_container)
         sub.createButton("Fullscreen", partial(cmd.exec, f"wmctrl -i -r {window["window_id"]} -b toggle,fullscreen"))
         sub.createButton("Maximize", partial(cmd.exec, f"wmctrl -i -r {window["window_id"]} -b toggle,maximized_vert,maximized_horz"))
-        sub.createButton("Minimize", partial(cmd.exec, f"xdotool windowminimize {window["window_id"]}"))
+        sub.createButton("Minimize (WIP)", partial(cmd.exec, f"xdotool windowminimize {window["window_id"]}"))
         sub.createButton("Close", partial(self.killProc, window))
         sub.populateContainer()
         self.winman_container.removeWidget("empty")
@@ -333,7 +333,7 @@ class OverlayWindow(QMainWindow):
             "Tmux Session": "tmux new-session -d -s simple",
             "Link Cores": "/home/pi/scripts/link_cores.sh",
             "Update Overlay": "cd /home/pi/overlay && git fetch && git pull",
-            "Restart Joycond": "systemctl restart joycond.service"
+            "Restart Joycond (WIP)": "echo hello"
         }
 
         for label_text, script in scripts.items():

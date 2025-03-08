@@ -14,8 +14,15 @@ def exec(command):
     logger.error(f"{command}: {result.stderr.strip()}") if result.returncode != 0 else None
     return result
 
+def _exec(command):
+    subprocess.popen(command, shell=True,
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL,
+                            stdin=subprocess.DEVNULL,
+                            start_new_session=True)
+
 def threadedExec(command):
-    threading.Thread(target=exec, args=(command,)).start()        
+    threading.Thread(target=_exec, args=(command,)).start()        
 
 
 def get_private_ip(interface='wlp1s0'):
