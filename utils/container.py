@@ -27,6 +27,9 @@ class ContainerManager:
             container_obj.container.setVisible(False)
 
         self.getContainer("Primary").container.setVisible(True)
+    
+    def deleteContainer(self, label):
+        self.containers.pop(label).container.deleteLater()
 
 class ContainerProp:
     def __init__(self, height, width, gs):
@@ -143,7 +146,7 @@ class ContainerProp:
         self.widgets[slider.objectName()] = slider
     
     def removeWidget(self, id):
-        self.layout.removeWidget(self.widgets[id])
+        self.layout.removeWidget(self.widgets[id.lower().replace(" ", "_")])
         self.widgets[id].deleteLater()
         self.widgets.pop(id)
         self.layout.update()

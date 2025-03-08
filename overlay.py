@@ -166,20 +166,21 @@ class OverlayWindow(QMainWindow):
             sender.setText(f"{sender.text()} (SIGKILL)")
             return
 
-        self.removeWindow(window) # If button is not removed after sigkill, refactor this
+        self.removeWindow(window)
 
     def addWindow(self, window):
         sub = self.createSubcontainer(f"{window["binary_name"]}[{window["pid"]}]", self.winman_container)
         sub.createButton("Fullscreen", partial(cmd.exec, f"wmctrl -i -r {window["window_id"]} -b toggle,fullscreen"))
         sub.createButton("Maximize", partial(cmd.exec, f"wmctrl -i -r {window["window_id"]} -b toggle,maximized_vert,maximized_horz"))
-        sub.createButton("Minimize", partial(cmd.exec, f"wmctrl -i -r {window["window_id"]} -b toggle,hidden"))
+        sub.createButton("Minimize", partial(cmd.exec, f"xdotool windowminimize {window["window_id"]}"))
         sub.createButton("Close", partial(self.killProc, window))
         sub.populateContainer()
         self.winman_container.removeWidget("empty")
         self.winman_container.populateContainer()
     
     def removeWindow(self, window):
-        self.winman_container.removeWidget(f"{window["binary_name"]}[{window["pid"]}]".lower().replace(" ", "_"))
+        self.winman_container.removeWidget(f"{window["binary_name"]}[{window["pid"]}]")
+        self.cm.deleteContainer("{window["binary_name"]}[{window["pid"]}]")
         self.winman_container.removeWidget("empty")
         self.winman_container.populateContainer()
 
@@ -269,22 +270,23 @@ class OverlayWindow(QMainWindow):
         primary.createLabel(" ", "hwstat", 16)
         primary.createLabel(" ", "separator", 4, solid=True)
         
-        self.app_name = "App Launcher"
-        self.toolbox_name = "Toolbox"
-        self.nvpm_name = "OC Profile"
-        self.services_name = "Services"
-        self.wm_name = "Active Windows"
-        self.debug_name = "debug_menu"
-        self.winman_container = self.createSubcontainer(self.wm_name, primary_container)
+        app_name = "App Launcher"
+        toolbox_name = "Toolbox"
+        nvpm_name = "OC Profile"
+        services_name = "Services"
+        wm_name = "Active Windows"
+        debug_name = "debug_menu"
+
+        winman_container = self.createSubcontainer(self.wm_name, primary_container)
         launcher_container = self.createSubcontainer(self.app_name, primary_container)
         toolbox_container = self.createSubcontainer(self.toolbox_name, primary_container, pos="bottom")
         self.profile_container = self.createSubcontainer(self.nvpm_name, toolbox_container)
         services_container = self.createSubcontainer(self.services_name, toolbox_container)
         if logger.getEffectiveLevel() == logging.DEBUG:
-            debug_container = self.createSubcontainer("debug_menu", primary_container)
+            debug_container = self.createSubcontainer(debug_name, primary_container)
             debug_container.createButton("toggle_desktop", self.toggleDesktop, self.gs.gray, self.gs.opacity)
             debug_container.createButton("debug_exit", self.closeApplication, self.gs.red, 0.35)
-        
+
 
         '''Services Stuff'''
         services = {
