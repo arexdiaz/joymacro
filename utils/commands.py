@@ -15,7 +15,7 @@ def exec(command):
     return result
 
 def _exec(command):
-    subprocess.popen(command, shell=True,
+    subprocess.Popen(command, shell=True,
                             stdout=subprocess.DEVNULL,
                             stderr=subprocess.DEVNULL,
                             stdin=subprocess.DEVNULL,
