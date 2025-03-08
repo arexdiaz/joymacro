@@ -231,7 +231,10 @@ class OverlayWindow(QMainWindow):
         for i, usage in enumerate(cpu_usage):
             cpu_status.append(f"CPU{i}: {usage}%")
         for container in self.cm.containers.values():
-            container.getWidget("cpu_stats").widget().setText(" ".join(cpu_status))
+            try:
+                container.getWidget("cpu_stats").widget().setText(" ".join(cpu_status))
+            except KeyError:
+                continue
     
     def isAppActive(self):
         is_active = QApplication.activeWindow() == self
