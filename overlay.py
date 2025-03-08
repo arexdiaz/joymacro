@@ -179,7 +179,7 @@ class OverlayWindow(QMainWindow):
         self.winman_container.populateContainer()
     
     def removeWindow(self, window):
-        self.winman_container.removeWidget(f"{window["binary_name"]}: {window["pid"]}".lower().replace(" ", "_"))
+        self.winman_container.removeWidget(f"{window["binary_name"]}[{window["pid"]}]".lower().replace(" ", "_"))
         self.winman_container.removeWidget("empty")
         self.winman_container.populateContainer()
 
@@ -298,11 +298,11 @@ class OverlayWindow(QMainWindow):
                 continue
             status = cmd.exec(f"systemctl is-active --quiet {service}").returncode == 0
             service_state, bg_color = ["ON", self.gs.green] if status else ["OFF", self.gs.gray]
-            sservices_container.createButton(f"{label_text}: {service_state}", \
+            services_container.createButton(f"{label_text}: {service_state}", \
                                        partial(self.toggleService, service), \
                                        bg_color, self.gs.opacity)
-                                       
-                                       
+
+
         '''Script Stuff'''
         profile_value = cmd.exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
         self.profile_append = " ✓"
@@ -320,7 +320,7 @@ class OverlayWindow(QMainWindow):
             if value == profile_value:
                 title += self.profile_append
                 self.current_profile = name
-            profile_container.createButton(title, partial(self.changeProfile, name, value))
+            self.profile_container.createButton(title, partial(self.changeProfile, name, value))
 
 
         scripts = {
