@@ -155,11 +155,11 @@ class OverlayWindow(QMainWindow):
             cmd.exec("sudo -u pi plasmashell &", False)
 
     def killProc(self, window, force=False):
-        window_term = f"wmctrl -ic {window['window_id']}"
+        window_close = f"wmctrl -ic {window['window_id']}"
         proc_term = f"kill -9 {window['pid']}"
         sender = self.sender()
         
-        cmd.exec(line)
+        cmd.exec(window_close)
 
         if not force:
             sender.clicked.disconnect()
