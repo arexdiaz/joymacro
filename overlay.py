@@ -181,8 +181,13 @@ class OverlayWindow(QMainWindow):
     def removeWindow(self, window):
         window_name = f"{window["binary_name"]}[{window["pid"]}]"
         window_obj = self.cm.getContainer(window_name)
+
+        if not window_obj:
+            return None
+
         if self.window_obj.container.isVisible():
             window_obj.switchContainer(self.winman_container)
+
         self.winman_container.removeWidget(window_name)
         self.cm.deleteContainer(window_name)
 
