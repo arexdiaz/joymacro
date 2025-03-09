@@ -3,6 +3,7 @@ import netifaces
 import requests
 import threading
 import subprocess
+import os
 
 logger = logging.getLogger("main")
 
@@ -14,16 +15,14 @@ def exec(command):
     logger.error(f"{command}: {result.stderr.strip()}") if result.returncode != 0 else None
     return result
 
-def _exec(command):
-    subprocess.Popen(command, shell=True,
-                            stdout=subprocess.DEVNULL,
-                            stderr=subprocess.DEVNULL,
-                            stdin=subprocess.DEVNULL,
-                            start_new_session=True)
-
-def threadedExec(command):
-    threading.Thread(target=_exec, args=(command,)).start()        
-
+def detachExec(string):
+    command = [i for i in string.split(" ") if i]
+    subprocess.Popen(
+        command,
+        shell=False,
+        start_new_session=True,
+        env=os.environ.copy()
+    )
 
 def get_private_ip(interface='wlp1s0'):
     try:

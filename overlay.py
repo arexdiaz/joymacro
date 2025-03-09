@@ -180,8 +180,9 @@ class OverlayWindow(QMainWindow):
     
     def removeWindow(self, window):
         window_name = f"{window["binary_name"]}[{window["pid"]}]"
-        if self.isVisible():
-            self.cm.getContainer(window_name).switchContainer(self.winman_container)
+        window_obj = self.cm.getContainer(window_name)
+        if self.window_obj.container.isVisible():
+            window_obj.switchContainer(self.winman_container)
         self.winman_container.removeWidget(window_name)
         self.cm.deleteContainer(window_name)
 
@@ -338,7 +339,7 @@ class OverlayWindow(QMainWindow):
         }
 
         for label_text, script in scripts.items():
-            toolbox_container.createButton(label_text, partial(cmd.threadedExec, script))
+            toolbox_container.createButton(label_text, partial(cmd.detachExec, script))
 
 
         '''Apps Stuff'''                             
@@ -347,7 +348,7 @@ class OverlayWindow(QMainWindow):
             "Konsole": "konsole",
         }
         for label_text, app in apps.items():
-           launcher_container.createButton(label_text, partial(cmd.threadedExec, app))
+           launcher_container.createButton(label_text, partial(cmd.detachExec, app))
 
         '''Primary Stuff'''
         brightness = cmd.exec("brightnessctl get").stdout.strip()
