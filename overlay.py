@@ -155,18 +155,16 @@ class OverlayWindow(QMainWindow):
             cmd.exec("sudo -u pi plasmashell &", False)
 
     def killProc(self, window, force=False):
-        cmd_string = "kill" if not force else "kill -9"
+        window_term = f"wmctrl -ic {window['window_id']}"
+        proc_term = f"kill -9 {window['pid']}"
         sender = self.sender()
         
-        result = cmd.exec(f"{cmd_string} {window["pid"]}")
+        cmd.exec(line)
 
         if not force:
             sender.clicked.disconnect()
-            sender.clicked.connect(partial(self.killProc, window, force=True))
+            sender.clicked.connect(partial(cmd.exec, proc_term, force=True))
             sender.setText(f"{sender.text()} (SIGKILL)")
-            return
-
-        self.removeWindow(window)
 
     def addWindow(self, window):
         sub = self.createSubcontainer(f"{window["binary_name"]}[{window["pid"]}]", self.winman_container)
@@ -182,10 +180,7 @@ class OverlayWindow(QMainWindow):
         window_name = f"{window["binary_name"]}[{window["pid"]}]"
         window_obj = self.cm.getContainer(window_name)
 
-        if not window_obj:
-            return None
-
-        if self.window_obj.container.isVisible():
+        if window_obj and window_obj.container.isVisible():
             window_obj.switchContainer(self.winman_container)
 
         self.winman_container.removeWidget(window_name)
