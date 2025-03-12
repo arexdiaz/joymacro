@@ -12,8 +12,9 @@ class ContainerManager:
     def __init__(self):
         self.containers = {}
 
-    def addContainer(self, label, container):
-        self.containers[label] = container
+    def addContainer(self, container):
+        self.containers[container.id] = container
+        return self.cotainers[label]
 
     def getContainer(self, label):
         return self.containers.get(label)
@@ -34,6 +35,7 @@ class ContainerManager:
 class ContainerProp:
     def __init__(self, height, width, gs):
         self.label = None
+        self.id = label.lower().replace(" ", "_")
         self.widgets = {}
         self.gs = gs
 
@@ -41,7 +43,6 @@ class ContainerProp:
         self.screen_width = width
 
         self.container = None
-        self.label = None
         self.parent = None
 
     def createContainer(self, OW, x, y, w, h, color, visible=True, label=None):
@@ -67,7 +68,7 @@ class ContainerProp:
         self.widgets[label.objectName()] = label
         return label
 
-    def createButton(self, label, callback, bg_color="0,0,0", opacity=0, pos="top"):
+    def createButton(self, label, callback, bg_color="0,0,0", opacity=0, font_size=self.gs.button_font_size, pos="top"):
         button = QPushButton(label)
         button.setObjectName(label.lower().replace(" ", "_"))
         button.setMinimumHeight(self.gs.elements_height)
@@ -75,23 +76,30 @@ class ContainerProp:
         button.pos = pos
         button.parent_label = self.label
 
-        button.setStyleSheet(self.gs.buttonStyle(bg_color, self.gs.button_font_size, opacity))
+        button.setStyleSheet(self.gs.buttonStyle(bg_color, font_size, opacity))
         self.widgets[button.objectName()] = button
         return button
-    
-    def createSubmenu(self, container, label, bg_color="0,0,0", opacity=0, pos="top"):
-        button = QPushButton(label)
-        button.setMinimumHeight(self.gs.elements_height)
-        button.clicked.connect(partial(self.switchContainer, container))
-        button.pos = pos
-        button.setObjectName(label.lower().replace(" ", "_"))
 
-        button.setStyleSheet(self.gs.buttonStyle(bg_color, self.gs.button_font_size, opacity))
-        self.widgets[button.objectName()] = button
+    def createSubcontainer(self, label, pos="top"):
+        def _switchContainer(first_container, second_container):
+            first_container.container.setVisible(False)
+            second_container.container.setVisible(True)
 
-    def switchContainer(self, sndContainer):
-        self.container.setVisible(False)
-        sndContainer.container.setVisible(True)
+        sub_container = ContainerProp(self.height(), self.width(), self.gs) # TODO: add label later
+        sub_container.createContainer(self, self.width() - self.menu_width, 0, self.menu_width, \
+                                           self.height(), self.gs.menu_color, visible=False)
+        sub_container.label = label
+        sub_container.parent = self
+
+        sub_container.createLabel(f"{label}", "header", 28)
+        sub_container.createLabel(" ", "separator", 4, solid=True)
+
+        sub_container.createButton("< Back", partial(_switchContainer, sub_container, self), self.gs.gray, self.gs.opacity, self.gs.button_font_size)
+
+        self.createButton(label, partial(_switchContainer, self, sub_container), self.gs.gray, self.gs.opacity, self.gs.button_font_size)
+
+        return sub_container
+
 
     def createSlider(self, callback, label, value=0, min=0, max=100, pos="top"):
         slider = QSlider(Qt.Orientation.Horizontal)
@@ -147,8 +155,9 @@ class ContainerProp:
         self.widgets[slider.objectName()] = slider
     
     def removeWidget(self, id):
-        self.layout.removeWidget(self.widgets[id.lower().replace(" ", "_")])
-        self.widgets[id].deleteLater()
+        key = id.lower().replace(" ", "_")
+        self.layout.removeWidget(self.widgets[key])
+        self.widgets[key].deleteLater()
         self.widgets.pop(id)
         self.layout.update()
 

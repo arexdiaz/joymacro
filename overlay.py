@@ -167,7 +167,7 @@ class OverlayWindow(QMainWindow):
             sender.setText(f"{sender.text()} (SIGKILL)")
 
     def addWindow(self, window):
-        sub = self.createSubcontainer(f"{window["binary_name"]}[{window["pid"]}]", self.winman_container)
+        sub = self.cm.addContainer(self.winman_container.createSubcontainer(f"{window["binary_name"]}[{window["pid"]}]"))
         sub.createButton("Fullscreen", partial(cmd.exec, f"wmctrl -i -r {window["window_id"]} -b toggle,fullscreen"))
         sub.createButton("Maximize", partial(cmd.exec, f"wmctrl -i -r {window["window_id"]} -b toggle,maximized_vert,maximized_horz"))
         sub.createButton("Minimize (WIP)", partial(cmd.exec, f"xdotool windowminimize {window["window_id"]}"))
@@ -249,21 +249,9 @@ class OverlayWindow(QMainWindow):
 
 
     '''Init Thingy'''
-    def createSubcontainer(self, label, prim_con, pos="top"):
-        con = ContainerProp(self.height(), self.width(), self.gs)
-        con.createContainer(self, self.width() - self.menu_width, 0, self.menu_width, \
-                                           self.height(), self.gs.menu_color, visible=False)
-        con.createLabel(f"{label}", "header", 28)
-        con.createLabel(" ", "separator", 4, solid=True)
-        con.createSubmenu(prim_con, "Back", self.gs.gray, self.gs.opacity)
-        con.parent = prim_con
-        prim_con.createSubmenu(con, label, self.gs.gray, self.gs.opacity, pos)
-
-        self.cm.addContainer(label, con)
-        return self.cm.getContainer(label)
-
     def initMenu(self):
         primary_container = ContainerProp(self.height(), self.width(), self.gs)
+        primary_container.label = "Primary Container"
         primary_container.createContainer(self, self.width() - self.menu_width, 0, self.menu_width, \
                                            self.height(), self.gs.menu_color)
         self.cm.addContainer("Primary", primary_container)
@@ -280,13 +268,18 @@ class OverlayWindow(QMainWindow):
         wm_name = "Active Windows"
         debug_name = "debug_menu"
 
-        self.winman_container = self.createSubcontainer(wm_name, primary_container)
-        launcher_container = self.createSubcontainer(app_name, primary_container)
-        toolbox_container = self.createSubcontainer(toolbox_name, primary_container, pos="bottom")
-        self.profile_container = self.createSubcontainer(nvpm_name, toolbox_container)
-        services_container = self.createSubcontainer(services_name, toolbox_container)
+        self.cm.addContainer(con) # TODO: Move to overlay
+        return self.cm.getContainer(label)
+
+        self.winman_container = self.cm.addContainer(primary_container.createSubcontainer(wm_name))
+        launcher_container = self.cm.addContainer(primary_container.createSubcontainer(app_name))
+
+        toolbox_container  = self.cm.addContainer(primary_container.createSubcontainer(toolbox_name, pos="bottom"))
+        self.profile_container = self.cm.addContainer(toolbox_container.createSubcontainer(nvpm_name))
+        services_container = self.cm.addContainer(toolbox_container.createSubcontainer(services_name))
+
         if logger.getEffectiveLevel() == logging.DEBUG:
-            debug_container = self.createSubcontainer(debug_name, primary_container)
+            debug_container = self.cm.addContainer(primary_container.createSubcontainer(debug_name))
             debug_container.createButton("toggle_desktop", self.toggleDesktop, self.gs.gray, self.gs.opacity)
             debug_container.createButton("debug_exit", self.closeApplication, self.gs.red, 0.35)
 
@@ -353,7 +346,7 @@ class OverlayWindow(QMainWindow):
         '''Primary Stuff'''
         brightness = cmd.exec("brightnessctl get").stdout.strip()
         primary.createSlider(self.setBrightness, "Brightness", value=int(brightness), min=1, max=255, pos="top")
-        primary.createButton("Power Options", self.spawnLogout, self.gs.gray, self.gs.opacity, "bottom")
+        primary.createButton("Power Options", self.spawnLogout, self.gs.gray, self.gs.opacity, pos="bottom")
         
         for container in self.cm.containers.values():
             container.createLabel(" ", "cpu_stats", 12, pos="bottom")
