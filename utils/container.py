@@ -33,9 +33,14 @@ class ContainerManager:
         self.containers.pop(label).container.deleteLater()
 
 class ContainerProp:
-    def __init__(self, height, width, gs, label=None):
+    def __init__(self, height, width, gs, label=None, id=None):
         self.label = label
-        self.id = self.label.lower().replace(" ", "_") if self.label else None
+
+        if id:
+            self.id = id
+        else:
+            self.id = self.label.lower().replace(" ", "_") if self.label else None
+
         self.widgets = {}
         self.gs = gs
 
@@ -70,9 +75,9 @@ class ContainerProp:
         self.widgets[label.objectName()] = label
         return label
 
-    def createButton(self, label, callback, bg_color="0,0,0", opacity=0, font_size=None, pos="top"):
+    def createButton(self, label, callback, bg_color="0,0,0", opacity=0, font_size=None, pos="top", id=None):
         button = QPushButton(label)
-        button.setObjectName(label.lower().replace(" ", "_"))
+        button.setObjectName(label.lower().replace(" ", "_") if not id else id)
         button.setMinimumHeight(self.gs.elements_height)
         button.clicked.connect(callback)
         button.pos = pos
@@ -84,7 +89,7 @@ class ContainerProp:
         self.widgets[button.objectName()] = button
         return button
 
-    def createSubcontainer(self, label, pos="top"):
+    def createSubcontainer(self, label, pos="top", id=None):
         def _switchContainer(first_container, second_container):
             first_container.container.setVisible(False)
             second_container.container.setVisible(True)
@@ -93,7 +98,8 @@ class ContainerProp:
             self.container.height(),
             self.container.width(),
             self.gs,
-            label=label
+            label=label,
+            id=id
         ) # TODO: add label later
 
         sub_container.createContainer(
@@ -120,7 +126,8 @@ class ContainerProp:
             self.gs.gray,
             self.gs.opacity,
             self.gs.button_font_size,
-            pos=pos
+            pos=pos,
+            id=id
         )
 
         return sub_container

@@ -11,6 +11,10 @@ import os
 import psutil
 import utils.commands as cmd
 
+import gi
+gi.require_version('Wnck', '3.0')
+from gi.repository import Wnck, GObject
+
 logger = logging.getLogger("main")
 
 class GlobalStyle():
@@ -70,6 +74,24 @@ class AppThread(QThread):
             self.is_active.emit()
             self.msleep(250)
 
+class WindowMonitor(QThread):
+    on_window_create = pyqtSignal(object)
+    on_window_close = pyqtSignal(object)
+
+    def on_window_opened(self, screen, window):
+        self.on_window_create.emit(window)
+
+    def on_window_closed(self, screen, window):
+        self.on_window_close.emit(window)
+
+    def run(self):
+        screen = Wnck.Screen.get_default()
+        screen.connect('window-opened', self.on_window_opened)
+        screen.connect('window-closed', self.on_window_closed)
+
+        loop = GObject.MainLoop()
+        loop.run()
+
 class OverlayWindow(QMainWindow):
     def __init__(self, gs):
         super().__init__()
@@ -78,16 +100,18 @@ class OverlayWindow(QMainWindow):
 
         self.essid = None
 
-        self.monitor_thread = WindowMonitorThread()
-        self.monitor_thread.on_window_create.connect(self.addWindow)
-        self.monitor_thread.on_window_close.connect(self.removeWindow)
-        self.monitor_thread.start()
+        self.window_monitor = WindowMonitor()
+        self.window_monitor.on_window_create.connect(self.addWindow)
+        self.window_monitor.on_window_close.connect(self.removeWindow)
+        self.window_monitor.start()
 
         self.proc_black_list = [
             "polybar",
+            "overlay_menu"
         ]
 
     def initUI(self):
+        self.setWindowTitle("overlay_menu")
         self.flags = Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint
         self.setWindowFlags(self.flags)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
@@ -153,43 +177,43 @@ class OverlayWindow(QMainWindow):
             cmd.exec("sudo -u pi plasmashell &", False)
 
     def killProc(self, window, force=False):
-        window_close = f"wmctrl -ic {window['window_id']}"
-        proc_term = f"kill -9 {window['pid']}"
+        window.close(1)
+        proc_term = f"kill -9 {window.get_pid()}"
         sender = self.sender()
         
-        cmd.exec(window_close)
-
-        if not force:
-            sender.clicked.disconnect()
-            sender.clicked.connect(partial(cmd.exec, proc_term, force=True))
-            sender.setText(f"{sender.text()} (SIGKILL)")
+        # sender.clicked.disconnect()
+        # sender.clicked.connect(partial(cmd.exec, proc_term, force=True))
+        # sender.setText(f"{sender.text()} (SIGKILL)")
 
     def addWindow(self, window):
-        if window["binary_name"].lower() in self.proc_black_list:
+        pid = window.get_pid()
+        name = window.get_name()
+        if name.lower() in self.proc_black_list:
             return
 
-        sub = self.cm.addContainer(self.winman_container.createSubcontainer(f"{window["binary_name"]}[{window["pid"]}]"))
-        sub.createButton("Fullscreen", partial(cmd.exec, f"wmctrl -i -r {window["window_id"]} -b toggle,fullscreen"))
-        sub.createButton("Maximize", partial(cmd.exec, f"wmctrl -i -r {window["window_id"]} -b toggle,maximized_vert,maximized_horz"))
-        sub.createButton("Minimize (WIP)", partial(cmd.exec, f"xdotool windowminimize {window["window_id"]}"))
+        sub = self.cm.addContainer(self.winman_container.createSubcontainer(f"{name}", id=str(pid)))
+        sub.createButton("Fullscreen", partial(window.set_fullscreen, window.is_fullscreen is not True))
+        sub.createButton("Maximize", window.maximize)
+        sub.createButton("Minimize (WIP)", window.minimize)
         sub.createButton("Close", partial(self.killProc, window))
         sub.populateContainer()
         self.winman_container.removeWidget("empty")
         self.winman_container.populateContainer()
     
     def removeWindow(self, window):
-        window_name = f"{window["binary_name"]}[{window["pid"]}]"
-        window_obj = self.cm.getContainer(window_name)
+        id = str(window.get_pid())
+        window_obj = self.cm.getContainer(id)
         
         if not window_obj:
+            print("did not find " + id)
             return
 
         if window_obj.container.isVisible():
             window_obj.container.setVisible(False)
             self.winman_container.container.setVisible(True)
 
-        self.winman_container.removeWidget(window_obj.id)
-        self.cm.deleteContainer(window_obj.id)
+        self.winman_container.removeWidget(id)
+        self.cm.deleteContainer(id)
 
     def updateProfile(self):
         current_profile = cmd.exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
