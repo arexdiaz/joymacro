@@ -89,19 +89,41 @@ class ContainerProp:
             first_container.container.setVisible(False)
             second_container.container.setVisible(True)
 
-        sub_container = ContainerProp(self.container.height(), self.container.width(), self.gs, label=label) # TODO: add label later
-        sub_container.createContainer(self.OW, self.x, self.y, self.w, \
-                                           self.h, self.gs.menu_color, visible=False)
-        sub_container.parent = self
+        sub_container = ContainerProp(
+            self.container.height(),
+            self.container.width(),
+            self.gs,
+            label=label
+        ) # TODO: add label later
 
+        sub_container.createContainer(
+            self.OW, self.x, self.y, self.w, self.h,
+            self.gs.menu_color,
+            visible=False
+        )
+
+        sub_container.parent = self
         sub_container.createLabel(f"{label}", "header", 28)
         sub_container.createLabel(" ", "separator", 4, solid=True)
 
-        sub_container.createButton("< Back", partial(_switchContainer, sub_container, self), self.gs.gray, self.gs.opacity, self.gs.button_font_size)
+        sub_container.createButton(
+            "Back",
+            partial(_switchContainer, sub_container, self),
+            self.gs.gray,
+            self.gs.opacity,
+            self.gs.button_font_size
+        )
 
-        self.createButton(label, partial(_switchContainer, self, sub_container), self.gs.gray, self.gs.opacity, self.gs.button_font_size, pos=pos)
+        self.createButton(
+            label,
+            partial(_switchContainer, self, sub_container),
+            self.gs.gray,
+            self.gs.opacity,
+            self.gs.button_font_size,
+            pos=pos
+        )
+
         return sub_container
-
 
     def createSlider(self, callback, label, value=0, min=0, max=100, pos="top"):
         slider = QSlider(Qt.Orientation.Horizontal)
