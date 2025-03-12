@@ -47,9 +47,12 @@ class ContainerProp:
 
     def createContainer(self, OW, x, y, w, h, color, visible=True):
         self.OW = OW
-        self.menu_width = w
+        self.x = x
+        self.y = y
+        self.w = w
+        self.h = h
         self.container = QWidget(self.OW)
-        self.container.setGeometry(x, y, self.menu_width, h)
+        self.container.setGeometry(x, y, w, h)
         self.container.setStyleSheet(f"background-color: {color};")
         self.container.setVisible(visible)
 
@@ -87,8 +90,8 @@ class ContainerProp:
             second_container.container.setVisible(True)
 
         sub_container = ContainerProp(self.container.height(), self.container.width(), self.gs, label=label) # TODO: add label later
-        sub_container.createContainer(self.OW, self.container.width() - self.menu_width, 0, self.menu_width, \
-                                           self.container.height(), self.gs.menu_color, visible=False)
+        sub_container.createContainer(self.OW, self.x, self.y, self.w, \
+                                           self.h, self.gs.menu_color, visible=False)
         sub_container.parent = self
 
         sub_container.createLabel(f"{label}", "header", 28)
@@ -96,7 +99,7 @@ class ContainerProp:
 
         sub_container.createButton("< Back", partial(_switchContainer, sub_container, self), self.gs.gray, self.gs.opacity, self.gs.button_font_size)
 
-        self.createButton(label, partial(_switchContainer, self, sub_container), self.gs.gray, self.gs.opacity, self.gs.button_font_size)
+        self.createButton(label, partial(_switchContainer, self, sub_container), self.gs.gray, self.gs.opacity, self.gs.button_font_size, pos=pos)
         return sub_container
 
 

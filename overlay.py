@@ -254,7 +254,6 @@ class OverlayWindow(QMainWindow):
         pc.createContainer(self, self.width() - self.menu_width, 0, self.menu_width, \
                                            self.height(), self.gs.menu_color)
         
-        
         primary_container = self.cm.addContainer(pc)
         primary_container.createLabel("Da Overlay Menu", "title", 28)
         primary_container.createLabel(" ", "hwstat", 16)
