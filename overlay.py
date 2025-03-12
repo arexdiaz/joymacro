@@ -74,7 +74,6 @@ class OverlayWindow(QMainWindow):
     def __init__(self, gs):
         super().__init__()
         self.gs = gs
-        self.last_active = None
         self.initUI()
 
         self.essid = None
@@ -89,13 +88,12 @@ class OverlayWindow(QMainWindow):
         ]
 
     def initUI(self):
-        self.flags = Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool | Qt.WindowType.WindowStaysOnTopHint
+        self.flags = Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint
         self.setWindowFlags(self.flags)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         screen_size = QApplication.primaryScreen().size()
-        self.setGeometry(0, 0, screen_size.width(), screen_size.height())
-        self.setWindowState(Qt.WindowState.WindowFullScreen)
-
+        self.setGeometry(QApplication.primaryScreen().geometry())
+        
         self.cm = ContainerManager()
 
         self.menu_width = int(self.width() * 0.3)
@@ -108,7 +106,6 @@ class OverlayWindow(QMainWindow):
 
     def toggleVisibility(self, event=None):
         if self.isVisible():
-            self.last_active = None
             self.cm.toggleContainers()
             self.hide()
             self.setWindowFlags(self.flags | Qt.WindowType.WindowTransparentForInput)
@@ -116,10 +113,7 @@ class OverlayWindow(QMainWindow):
         else:
             self.getHWStatus()
             self.updateProfile()
-            self.raise_()
-            self.activateWindow()
             self.setWindowFlags(self.flags)
-            self.setWindowState(Qt.WindowState.WindowFullScreen)
             self.show()
             QApplication.processEvents()
 
