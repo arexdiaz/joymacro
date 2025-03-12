@@ -3,7 +3,6 @@ from PyQt6.QtCore import Qt, QMetaObject, QThread, pyqtSignal, QDate, QTime, pyq
 from PyQt6 import sip
 from functools import partial
 from utils.container import ContainerManager, ContainerProp
-from utils.winmngr import WindowMonitorThread
 import logging
 import threading
 import subprocess
