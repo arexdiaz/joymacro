@@ -84,6 +84,10 @@ class OverlayWindow(QMainWindow):
         self.monitor_thread.on_window_close.connect(self.removeWindow)
         self.monitor_thread.start()
 
+        self.proc_black_list = [
+            "polybar",
+        ]
+
     def initUI(self):
         self.flags = Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool | Qt.WindowType.WindowStaysOnTopHint
         self.setWindowFlags(self.flags)
@@ -167,6 +171,9 @@ class OverlayWindow(QMainWindow):
             sender.setText(f"{sender.text()} (SIGKILL)")
 
     def addWindow(self, window):
+        if window["binary_name"].lower() in self.proc_black_list:
+            return
+
         sub = self.cm.addContainer(self.winman_container.createSubcontainer(f"{window["binary_name"]}[{window["pid"]}]"))
         sub.createButton("Fullscreen", partial(cmd.exec, f"wmctrl -i -r {window["window_id"]} -b toggle,fullscreen"))
         sub.createButton("Maximize", partial(cmd.exec, f"wmctrl -i -r {window["window_id"]} -b toggle,maximized_vert,maximized_horz"))
@@ -181,7 +188,8 @@ class OverlayWindow(QMainWindow):
         window_obj = self.cm.getContainer(window_name)
 
         if window_obj and window_obj.container.isVisible():
-            window_obj.switchContainer(self.winman_container)
+            window_obj.container.setVisible(False)
+            self.winman_container.container.setVisible(True)
 
         self.winman_container.removeWidget(window_name)
         self.cm.deleteContainer(window_name)

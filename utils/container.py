@@ -160,7 +160,7 @@ class ContainerProp:
         key = id.lower().replace(" ", "_")
         self.layout.removeWidget(self.widgets[key])
         self.widgets[key].deleteLater()
-        self.widgets.pop(id)
+        self.widgets.pop(key)
         self.layout.update()
 
     def getWidget(self, id):
