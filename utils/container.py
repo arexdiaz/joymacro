@@ -68,7 +68,7 @@ class ContainerProp:
         self.widgets[label.objectName()] = label
         return label
 
-    def createButton(self, label, callback, bg_color="0,0,0", opacity=0, font_size=self.gs.button_font_size, pos="top"):
+    def createButton(self, label, callback, bg_color="0,0,0", opacity=0, font_size=None, pos="top"):
         button = QPushButton(label)
         button.setObjectName(label.lower().replace(" ", "_"))
         button.setMinimumHeight(self.gs.elements_height)
@@ -76,7 +76,9 @@ class ContainerProp:
         button.pos = pos
         button.parent_label = self.label
 
-        button.setStyleSheet(self.gs.buttonStyle(bg_color, font_size, opacity))
+        fs = font_size if font_size else self.gs.button_font_size
+
+        button.setStyleSheet(self.gs.buttonStyle(bg_color, fs, opacity))
         self.widgets[button.objectName()] = button
         return button
 
