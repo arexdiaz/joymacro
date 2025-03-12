@@ -221,7 +221,7 @@ class OverlayWindow(QMainWindow):
         else:
             battery_status = ""
 
-        self.cm.getContainer("Primary").getWidget("hwstat").widget().setText(
+        self.cm.getContainer("primary_container").getWidget("hwstat").widget().setText(
                 f"{current_date} {current_time}\n"\
                 f"{user}@{host_name}\n"\
                 f"ip: {self.private_ip} pub: {self.public_ip}\n"\
@@ -250,16 +250,15 @@ class OverlayWindow(QMainWindow):
 
     '''Init Thingy'''
     def initMenu(self):
-        primary_container = ContainerProp(self.height(), self.width(), self.gs)
-        primary_container.label = "Primary Container"
-        primary_container.createContainer(self, self.width() - self.menu_width, 0, self.menu_width, \
+        pc = ContainerProp(self.height(), self.width(), self.gs, label="Primary Container")
+        pc.createContainer(self, self.width() - self.menu_width, 0, self.menu_width, \
                                            self.height(), self.gs.menu_color)
-        self.cm.addContainer("Primary", primary_container)
         
-        primary = self.cm.getContainer("Primary")
-        primary.createLabel("Da Overlay Menu", "title", 28)
-        primary.createLabel(" ", "hwstat", 16)
-        primary.createLabel(" ", "separator", 4, solid=True)
+        
+        primary_container = self.cm.addContainer(pc)
+        primary_container.createLabel("Da Overlay Menu", "title", 28)
+        primary_container.createLabel(" ", "hwstat", 16)
+        primary_container.createLabel(" ", "separator", 4, solid=True)
         
         app_name = "App Launcher"
         toolbox_name = "Toolbox"
@@ -267,9 +266,6 @@ class OverlayWindow(QMainWindow):
         services_name = "Services"
         wm_name = "Active Windows"
         debug_name = "debug_menu"
-
-        self.cm.addContainer(con) # TODO: Move to overlay
-        return self.cm.getContainer(label)
 
         self.winman_container = self.cm.addContainer(primary_container.createSubcontainer(wm_name))
         launcher_container = self.cm.addContainer(primary_container.createSubcontainer(app_name))
@@ -282,7 +278,6 @@ class OverlayWindow(QMainWindow):
             debug_container = self.cm.addContainer(primary_container.createSubcontainer(debug_name))
             debug_container.createButton("toggle_desktop", self.toggleDesktop, self.gs.gray, self.gs.opacity)
             debug_container.createButton("debug_exit", self.closeApplication, self.gs.red, 0.35)
-
 
         '''Services Stuff'''
         services = {
@@ -345,8 +340,8 @@ class OverlayWindow(QMainWindow):
 
         '''Primary Stuff'''
         brightness = cmd.exec("brightnessctl get").stdout.strip()
-        primary.createSlider(self.setBrightness, "Brightness", value=int(brightness), min=1, max=255, pos="top")
-        primary.createButton("Power Options", self.spawnLogout, self.gs.gray, self.gs.opacity, pos="bottom")
+        primary_container.createSlider(self.setBrightness, "Brightness", value=int(brightness), min=1, max=255, pos="top")
+        primary_container.createButton("Power Options", self.spawnLogout, self.gs.gray, self.gs.opacity, pos="bottom")
         
         for container in self.cm.containers.values():
             container.createLabel(" ", "cpu_stats", 12, pos="bottom")

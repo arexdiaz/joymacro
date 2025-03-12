@@ -14,7 +14,7 @@ class ContainerManager:
 
     def addContainer(self, container):
         self.containers[container.id] = container
-        return self.cotainers[label]
+        return self.containers[container.id]
 
     def getContainer(self, label):
         return self.containers.get(label)
@@ -27,15 +27,15 @@ class ContainerManager:
         for label, container_obj in self.containers.items():
             container_obj.container.setVisible(False)
 
-        self.getContainer("Primary").container.setVisible(True)
+        self.getContainer("primary_container").container.setVisible(True)
     
     def deleteContainer(self, label):
         self.containers.pop(label).container.deleteLater()
 
 class ContainerProp:
-    def __init__(self, height, width, gs):
-        self.label = None
-        self.id = label.lower().replace(" ", "_")
+    def __init__(self, height, width, gs, label=None):
+        self.label = label
+        self.id = self.label.lower().replace(" ", "_") if self.label else None
         self.widgets = {}
         self.gs = gs
 
@@ -45,14 +45,13 @@ class ContainerProp:
         self.container = None
         self.parent = None
 
-    def createContainer(self, OW, x, y, w, h, color, visible=True, label=None):
-        self.container = QWidget(OW)
-        self.container.setGeometry(x, y, w, h)
+    def createContainer(self, OW, x, y, w, h, color, visible=True):
+        self.OW = OW
+        self.menu_width = w
+        self.container = QWidget(self.OW)
+        self.container.setGeometry(x, y, self.menu_width, h)
         self.container.setStyleSheet(f"background-color: {color};")
         self.container.setVisible(visible)
-        if label:
-            # self.container_objs[label] = self.container
-            self.label = label
 
         inner_menu = QWidget(self.container)
         inner_menu.setGeometry(0, 0, self.container.width(), self.container.height())
@@ -87,10 +86,9 @@ class ContainerProp:
             first_container.container.setVisible(False)
             second_container.container.setVisible(True)
 
-        sub_container = ContainerProp(self.height(), self.width(), self.gs) # TODO: add label later
-        sub_container.createContainer(self, self.width() - self.menu_width, 0, self.menu_width, \
-                                           self.height(), self.gs.menu_color, visible=False)
-        sub_container.label = label
+        sub_container = ContainerProp(self.container.height(), self.container.width(), self.gs, label=label) # TODO: add label later
+        sub_container.createContainer(self.OW, self.container.width() - self.menu_width, 0, self.menu_width, \
+                                           self.container.height(), self.gs.menu_color, visible=False)
         sub_container.parent = self
 
         sub_container.createLabel(f"{label}", "header", 28)
@@ -99,7 +97,6 @@ class ContainerProp:
         sub_container.createButton("< Back", partial(_switchContainer, sub_container, self), self.gs.gray, self.gs.opacity, self.gs.button_font_size)
 
         self.createButton(label, partial(_switchContainer, self, sub_container), self.gs.gray, self.gs.opacity, self.gs.button_font_size)
-
         return sub_container
 
 
