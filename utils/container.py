@@ -17,7 +17,7 @@ class ContainerManager:
         return self.containers[container.id]
 
     def getContainer(self, label):
-        return self.containers.get(label)
+        return self.containers.get(label.lower().replace(" ", "_"))
 
     def poulateAllContainers(self):
         for label, container in self.containers.items():

@@ -186,13 +186,16 @@ class OverlayWindow(QMainWindow):
     def removeWindow(self, window):
         window_name = f"{window["binary_name"]}[{window["pid"]}]"
         window_obj = self.cm.getContainer(window_name)
+        
+        if not window_obj:
+            return
 
-        if window_obj and window_obj.container.isVisible():
+        if window_obj.container.isVisible():
             window_obj.container.setVisible(False)
             self.winman_container.container.setVisible(True)
 
-        self.winman_container.removeWidget(window_name)
-        self.cm.deleteContainer(window_name)
+        self.winman_container.removeWidget(window_obj.id)
+        self.cm.deleteContainer(window_obj.id)
 
     def updateProfile(self):
         current_profile = cmd.exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
