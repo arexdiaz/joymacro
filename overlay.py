@@ -105,7 +105,7 @@ class OverlayWindow(QMainWindow):
         self.window_monitor.start()
 
         self.proc_black_list = [
-            "polybar",
+            "polybar-mybar_DSI-0",
             "overlay_menu"
         ]
 
