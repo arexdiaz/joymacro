@@ -9,10 +9,8 @@ import subprocess
 import os
 import psutil
 import utils.commands as cmd
+import utils.window
 
-import gi
-gi.require_version('Wnck', '3.0')
-from gi.repository import Wnck, GObject
 
 logger = logging.getLogger("main")
 
@@ -73,35 +71,18 @@ class AppThread(QThread):
             self.is_active.emit()
             self.msleep(250)
 
-class WindowMonitor(QThread):
-    on_window_create = pyqtSignal(object)
-    on_window_close = pyqtSignal(object)
-
-    def on_window_opened(self, screen, window):
-        self.on_window_create.emit(window)
-
-    def on_window_closed(self, screen, window):
-        self.on_window_close.emit(window)
-
-    def run(self):
-        screen = Wnck.Screen.get_default()
-        screen.connect('window-opened', self.on_window_opened)
-        screen.connect('window-closed', self.on_window_closed)
-
-        loop = GObject.MainLoop()
-        loop.run()
-
 class OverlayWindow(QMainWindow):
     def __init__(self, gs):
         super().__init__()
         self.gs = gs
         self.initUI()
 
+        self.pid = os.getpid()
         self.essid = None
 
-        self.window_monitor = WindowMonitor()
-        self.window_monitor.on_window_create.connect(self.addWindow)
-        self.window_monitor.on_window_close.connect(self.removeWindow)
+        self.window_monitor = utils.window.WindowMonitor()
+        self.window_monitor.on_window_create.connect(self.onWindowOpen)
+        self.window_monitor.on_window_close.connect(self.onWindowClose)
         self.window_monitor.start()
 
         self.proc_black_list = [
@@ -180,31 +161,27 @@ class OverlayWindow(QMainWindow):
         proc_term = f"kill -9 {window.get_pid()}"
         sender = self.sender()
         
-        # sender.clicked.disconnect()
-        # sender.clicked.connect(partial(cmd.exec, proc_term, force=True))
-        # sender.setText(f"{sender.text()} (SIGKILL)")
-
-    def addWindow(self, window):
-        pid = window.get_pid()
-        name = window.get_name()
+    def onWindowOpen(self, window):
+        pid = window.pid
+        name = window.title
+        
         if name.lower() in self.proc_black_list:
             return
 
         sub = self.cm.addContainer(self.winman_container.createSubcontainer(f"{name}", id=str(pid)))
-        sub.createButton("Fullscreen", partial(window.set_fullscreen, window.is_fullscreen is not True))
-        sub.createButton("Maximize", window.maximize)
-        sub.createButton("Minimize (WIP)", window.minimize)
-        sub.createButton("Close", partial(self.killProc, window))
+        # sub.createButton("Fullscreen", sub.ext.toggleFullscreen)
+        # sub.createButton("Maximize", sub.ext.toggleMax)
+        # sub.createButton("Minimize (WIP)", sub.ext.toggleHide)
+        sub.createButton("Close", window.close)
         sub.populateContainer()
         self.winman_container.removeWidget("empty")
         self.winman_container.populateContainer()
     
-    def removeWindow(self, window):
-        id = str(window.get_pid())
+    def onWindowClose(self, window):
+        id = str(window.pid)
         window_obj = self.cm.getContainer(id)
-        
+
         if not window_obj:
-            print("did not find " + id)
             return
 
         if window_obj.container.isVisible():
