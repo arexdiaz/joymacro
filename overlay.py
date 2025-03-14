@@ -74,9 +74,6 @@ class OverlayWindow(QMainWindow):
         self.gs = gs
         self.initUI()
 
-        self.pid = os.getpid()
-        self.essid = None
-
         self.proc_black_list = [
             "polybar-mybar_DSI-0",
             "overlay_menu"
@@ -107,7 +104,7 @@ class OverlayWindow(QMainWindow):
             self.setWindowFlags(self.flags | Qt.WindowType.WindowTransparentForInput)
             QApplication.processEvents()
         else:
-            self.getHWStatus()
+            self.cm.getContainer(self.pc_name).getHWStatus()
             self.profile_container.updateProfile()
             self.setWindowFlags(self.flags)
             self.show()
@@ -164,11 +161,13 @@ class OverlayWindow(QMainWindow):
 
     '''Init Thingy'''
     def initMenu(self):
-        pc = ContainerProp(self.height(), self.width(), self.gs, label="Primary Container")
+        self.pc_name = "Primary Container"
+        pc = ContainerProp(self.height(), self.width(), self.gs, label=self.pc_name)
         pc.createContainer(self, self.width() - self.menu_width, 0, self.menu_width, \
                                            self.height(), self.gs.menu_color)
         
         primary_container = self.cm.addContainer(pc)
+        primary_container.essid = None
         primary_container.createLabel("Da Overlay Menu", "title", 28)
         primary_container.createLabel(" ", "hwstat", 16)
         primary_container.createLabel(" ", "separator", 4, solid=True)
