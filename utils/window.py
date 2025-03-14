@@ -226,7 +226,7 @@ class WindowMonitor(QThread):
 
                     for win_id in added:
                         window = Window(win_id, display)
-                        if window.pid == os.pid():
+                        if window.pid == os.getpid():
                             return
                         window_instances[win_id] = window
                         self.on_window_create.emit(window)
@@ -234,7 +234,7 @@ class WindowMonitor(QThread):
 
                     for win_id in removed:
                         window = window_instances.pop(win_id)
-                        if window.pid == os.pid():
+                        if window.pid == os.getpid():
                             return
                         self.on_window_close.emit(window)
                         logger.debug(f"Window closed: ID={window.id}, PID={window.pid}, Title='{window.title}'")
