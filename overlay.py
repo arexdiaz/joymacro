@@ -167,7 +167,7 @@ class OverlayWindow(QMainWindow):
                 f"{current_date} {current_time}\n"\
                 f"{user}@{host_name}\n"\
                 f"ip: {self.private_ip} pub: {self.public_ip}\n"\
-                f"{self.current_profile} {int(battery_percent.percent)}%{battery_status}"
+                f"{self.profile_container.current_profile} {int(battery_percent.percent)}%{battery_status}"
             )
 
     def getCPUStatus(self):
@@ -266,7 +266,7 @@ class OverlayWindow(QMainWindow):
             title = f"{value}: {name}"
             if value == profile_value:
                 title += self.profile_container.check
-                self.current_profile = name
+                self.profile_container.current_profile = name
             self.profile_container.createButton(title, partial(self.profile_container.changeProfile, name, value))
 
 
