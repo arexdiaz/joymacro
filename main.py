@@ -97,5 +97,5 @@ if __name__ == "__main__":
         overlay_menu.QApplication.quit()
         os._exit(1)
     except Exception as e:
-        logging.error(f"An error occurred: {e}")
+        logging.exception("An error occurred")
         os._exit(1)
