@@ -58,7 +58,7 @@ class Window:
                 )
                 self.window.send_event(event, event_mask=X.NoEventMask)
                 self.display.flush()
-                print("Toggle close")
+                logger.debug("Toggle close")
             else:
                 logger.error("Window does not support WM_DELETE_WINDOW protocol")
         except XError as e:
