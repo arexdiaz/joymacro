@@ -114,7 +114,7 @@ def getHWStatus(self):
         battery_status = ""
 
     index = exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
-    profile_container = self.getChild("toolbox").getChild("oc_profile")
+    profile_container = self.getChild("Toolbox").getChild("OC Profile")
     profile_container.current_profile = profile_container.profiles[index]
     self.getWidget("hwstat").widget().setText(
             f"{current_date} {current_time}\n"\
