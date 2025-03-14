@@ -104,7 +104,7 @@ def getHWStatus(self):
         self.private_ip = get_private_ip()
         self.public_ip = get_public_ip()
 
-    host_name = os.uname()
+    host_name = os.uname().nodename
     user = os.getlogin()
 
     battery_percent = psutil.sensors_battery()
