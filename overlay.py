@@ -10,7 +10,7 @@ import os
 import psutil
 import utils.commands as cmd
 import utils.window
-
+import types
 
 logger = logging.getLogger("main")
 
@@ -80,11 +80,6 @@ class OverlayWindow(QMainWindow):
         self.pid = os.getpid()
         self.essid = None
 
-        self.window_monitor = utils.window.WindowMonitor()
-        self.window_monitor.on_window_create.connect(self.onWindowOpen)
-        self.window_monitor.on_window_close.connect(self.onWindowClose)
-        self.window_monitor.start()
-
         self.proc_black_list = [
             "polybar-mybar_DSI-0",
             "overlay_menu"
@@ -149,48 +144,6 @@ class OverlayWindow(QMainWindow):
 
         button.setText(f"{label}: {button_state}")
         button.setStyleSheet(self.gs.buttonStyle(button_color, self.gs.button_font_size, self.gs.opacity))
-
-    def toggleDesktop(self):
-        pid = cmd.exec("pkill plasmashell", status=True)
-        if not pid.returncode == 0:
-            # threading.Thread(target=cmd.exec, args=(f"sudo -u pi plasmashell", False,)).start()
-            cmd.exec("sudo -u pi plasmashell &", False)
-
-    def killProc(self, window, force=False):
-        window.close(1)
-        proc_term = f"kill -9 {window.get_pid()}"
-        sender = self.sender()
-        
-    def onWindowOpen(self, window):
-        pid = window.pid
-        name = window.title
-        
-        if name.lower() in self.proc_black_list:
-            return
-        
-        # TODO: move container creation to winman_container
-        sub = self.cm.addContainer(self.winman_container.createSubcontainer(f"{name}", id=str(pid)))
-        sub.createButton("Fullscreen", window.toggleFullscreen)
-        sub.createButton("Maximize", window.toggleMaximize)
-        sub.createButton("Minimize (WIP)", window.toggleMinimize)
-        sub.createButton("Close", window.close)
-        sub.populateContainer()
-        self.winman_container.removeWidget("empty")
-        self.winman_container.populateContainer()
-    
-    def onWindowClose(self, window):
-        id = str(window.pid)
-        window_obj = self.cm.getContainer(id)
-
-        if not window_obj:
-            return
-
-        if window_obj.container.isVisible():
-            window_obj.container.setVisible(False)
-            self.winman_container.container.setVisible(True)
-
-        self.winman_container.removeWidget(id)
-        self.cm.deleteContainer(id)
 
     def updateProfile(self):
         current_profile = cmd.exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
@@ -272,16 +225,22 @@ class OverlayWindow(QMainWindow):
         wm_name = "Active Windows"
         debug_name = "debug_menu"
 
-        self.winman_container = self.cm.addContainer(primary_container.createSubcontainer(wm_name))
-        launcher_container = self.cm.addContainer(primary_container.createSubcontainer(app_name))
+        winman_container = self.cm.addContainer(primary_container.createChildContainer(wm_name))
+        winman_container.onWindowOpen = types.MethodType(cmd.onWindowOpen, winman_container)
+        winman_container.onWindowClose = types.MethodType(cmd.onWindowClose, winman_container)
 
-        toolbox_container  = self.cm.addContainer(primary_container.createSubcontainer(toolbox_name, pos="bottom"))
-        self.profile_container = self.cm.addContainer(toolbox_container.createSubcontainer(nvpm_name))
-        services_container = self.cm.addContainer(toolbox_container.createSubcontainer(services_name))
+        window_monitor = utils.window.WindowMonitor()
+        window_monitor.on_window_create.connect(winman_container.onWindowOpen)
+        window_monitor.on_window_close.connect(winman_container.onWindowClose)
+        window_monitor.start()
+
+        launcher_container = self.cm.addContainer(primary_container.createChildContainer(app_name))
+        toolbox_container  = self.cm.addContainer(primary_container.createChildContainer(toolbox_name, pos="bottom"))
+        self.profile_container = self.cm.addContainer(toolbox_container.createChildContainer(nvpm_name))
+        services_container = self.cm.addContainer(toolbox_container.createChildContainer(services_name))
 
         if logger.getEffectiveLevel() == logging.DEBUG:
-            debug_container = self.cm.addContainer(primary_container.createSubcontainer(debug_name))
-            debug_container.createButton("toggle_desktop", self.toggleDesktop, self.gs.gray, self.gs.opacity)
+            debug_container = self.cm.addContainer(primary_container.createChildContainer(debug_name))
             debug_container.createButton("debug_exit", self.closeApplication, self.gs.red, 0.35)
 
         '''Services Stuff'''

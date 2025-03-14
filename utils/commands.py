@@ -47,3 +47,33 @@ def get_essid(interface='wlp1s0'):
     except subprocess.CalledProcessError:
         essid = "N/A"
     return essid
+
+def onWindowOpen(self, window):
+    pid = window.pid
+    name = window.title
+    
+    # if name.lower() in self.proc_black_list:
+    #     return
+    
+    sub = self.createChildContainer(f"{name}", id=str(pid))
+    sub.createButton("Fullscreen", window.toggleFullscreen)
+    sub.createButton("Maximize", window.toggleMaximize)
+    sub.createButton("Minimize (WIP)", window.toggleMinimize)
+    sub.createButton("Close", window.close)
+    sub.populateContainer()
+    self.removeWidget("empty")
+    self.populateContainer()
+
+def onWindowClose(self, window):
+    id = str(window.pid)
+    window_obj = self.getChild(id)
+
+    if not window_obj:
+        return
+
+    if window_obj.container.isVisible():
+        window_obj.container.setVisible(False)
+        self.container.setVisible(True)
+
+    self.removeWidget(id)
+    self.removeChild(id)

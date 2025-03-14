@@ -42,6 +42,7 @@ class ContainerProp:
             self.id = self.label.lower().replace(" ", "_") if self.label else None
 
         self.widgets = {}
+        self.childs = {}
         self.gs = gs
 
         self.screen_height = height
@@ -89,32 +90,33 @@ class ContainerProp:
         self.widgets[button.objectName()] = button
         return button
 
-    def createSubcontainer(self, label, pos="top", id=None):
+    def createChildContainer(self, label, pos="top", id=None):
         def _switchContainer(first_container, second_container):
             first_container.container.setVisible(False)
             second_container.container.setVisible(True)
 
-        sub_container = ContainerProp(
+        child = ContainerProp(
             self.container.height(),
             self.container.width(),
             self.gs,
             label=label,
             id=id
-        ) # TODO: add label later
+        )
 
-        sub_container.createContainer(
+        child.createContainer(
             self.OW, self.x, self.y, self.w, self.h,
             self.gs.menu_color,
             visible=False
         )
+        
+        self.childs[child.id] = child
+        child.parent = self
+        child.createLabel(f"{label}", "header", 28)
+        child.createLabel(" ", "separator", 4, solid=True)
 
-        sub_container.parent = self
-        sub_container.createLabel(f"{label}", "header", 28)
-        sub_container.createLabel(" ", "separator", 4, solid=True)
-
-        sub_container.createButton(
+        child.createButton(
             "Back",
-            partial(_switchContainer, sub_container, self),
+            partial(_switchContainer, child, self),
             self.gs.gray,
             self.gs.opacity,
             self.gs.button_font_size
@@ -122,7 +124,7 @@ class ContainerProp:
 
         self.createButton(
             label,
-            partial(_switchContainer, self, sub_container),
+            partial(_switchContainer, self, child),
             self.gs.gray,
             self.gs.opacity,
             self.gs.button_font_size,
@@ -130,7 +132,7 @@ class ContainerProp:
             id=id
         )
 
-        return sub_container
+        return child
 
     def createSlider(self, callback, label, value=0, min=0, max=100, pos="top"):
         slider = QSlider(Qt.Orientation.Horizontal)
@@ -184,6 +186,15 @@ class ContainerProp:
         """)
 
         self.widgets[slider.objectName()] = slider
+
+    def getChild(self, id):
+        return self.childs.get(id.lower().replace(" ", "_"))
+
+    def removeChild(self, id):
+        self.childs.pop(id).container.deleteLater()
+
+    def getWidget(self, id):
+        return self.layout.itemAt(self.layout.indexOf(self.widgets[id]))
     
     def removeWidget(self, id):
         key = id.lower().replace(" ", "_")
@@ -191,9 +202,6 @@ class ContainerProp:
         self.widgets[key].deleteLater()
         self.widgets.pop(key)
         self.layout.update()
-
-    def getWidget(self, id):
-        return self.layout.itemAt(self.layout.indexOf(self.widgets[id]))
 
     def resetLayout(self):
         for id, widget in self.widgets.items():
