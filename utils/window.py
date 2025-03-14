@@ -114,7 +114,7 @@ class Window:
     def toggleMinimize(self):
         try:
             wm_change_state = self.display.intern_atom("WM_CHANGE_STATE")
-            target_state = Xutil.IcocnicState if not self.is_minimized else Xutil.NormalState
+            target_state = Xutil.IconicState if not self.is_minimized else Xutil.NormalState
             
             event = ClientMessage(
                 window=self.window,
