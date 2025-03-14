@@ -96,8 +96,6 @@ def changeProfile(self, name, value):
     self.updateProfile()
 
 def getHWStatus(self):
-    self.public_ip = "N/A"
-    self.private_ip = "N/A"
     essid = get_essid()
     current_time = QTime.currentTime().toString("h:mm AP")
     current_date = QDate.currentDate().toString("MMM dd")

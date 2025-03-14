@@ -138,17 +138,6 @@ class OverlayWindow(QMainWindow):
 
         button.setText(f"{label}: {button_state}")
         button.setStyleSheet(self.gs.buttonStyle(button_color, self.gs.button_font_size, self.gs.opacity))
-
-    def getCPUStatus(self):
-        cpu_usage = psutil.cpu_percent(percpu=True)
-        cpu_status = []
-        for i, usage in enumerate(cpu_usage):
-            cpu_status.append(f"CPU{i}: {usage}%")
-        for container in self.cm.containers.values():
-            try:
-                container.getWidget("cpu_stats").widget().setText(" ".join(cpu_status))
-            except KeyError:
-                continue
     
     def isAppActive(self):
         is_active = QApplication.activeWindow() == self
@@ -166,20 +155,23 @@ class OverlayWindow(QMainWindow):
         pc.createContainer(self, self.width() - self.menu_width, 0, self.menu_width, \
                                            self.height(), self.gs.menu_color)
         
-        primary_container = self.cm.addContainer(pc)
-        primary_container.essid = None
-        primary_container.createLabel("Da Overlay Menu", "title", 28)
-        primary_container.createLabel(" ", "hwstat", 16)
-        primary_container.createLabel(" ", "separator", 4, solid=True)
-
-        primary_container.getHWStatus = types.MethodType(cmd.getHWStatus, primary_container)
-        
         app_name = "App Launcher"
         toolbox_name = "Toolbox"
         nvpm_name = "OC Profile"
         services_name = "Services"
         wm_name = "Active Windows"
         debug_name = "debug_menu"
+
+        primary_container = self.cm.addContainer(pc)
+        primary_container.essid = None
+        primary_container.public_ip = "N/A"
+        primary_container.private_ip = "N/A"
+        primary_container.createLabel("Da Overlay Menu", "title", 28)
+        primary_container.createLabel(" ", "hwstat", 16)
+        primary_container.createLabel(" ", "separator", 4, solid=True)
+        primary_container.createButton("Power Options", self.spawnLogout, self.gs.gray, self.gs.opacity, pos="bottom")
+
+        primary_container.getHWStatus = types.MethodType(cmd.getHWStatus, primary_container)
 
         winman_container = self.cm.addContainer(primary_container.createChildContainer(wm_name))
         winman_container.onWindowOpen = types.MethodType(cmd.onWindowOpen, winman_container)
@@ -247,7 +239,7 @@ class OverlayWindow(QMainWindow):
             "Tmux Session": partial(cmd.detachExec, "tmux new-session -d -s simple"),
             "Link Cores": partial(cmd.detachExec, "/home/pi/scripts/link_cores.sh"),
             "Update Overlay": partial(cmd.detachExec, "cd /home/pi/overlay && git fetch && git pull"),
-            "Restart Joycond (WIP)": logger.info("this is a test!")
+            "Restart Joycond (WIP)": partial(logger.info, "this is a test!")
         }
 
         for label_text, script in scripts.items():
@@ -261,24 +253,19 @@ class OverlayWindow(QMainWindow):
         for label_text, app in apps.items():
            launcher_container.createButton(label_text, partial(cmd.detachExec, app))
 
-        '''Primary Stuff'''
+        # Slider is absolute last
         brightness = cmd.exec("brightnessctl get").stdout.strip()
         primary_container.createSlider(self.setBrightness, "Brightness", value=int(brightness), min=1, max=255, pos="top")
-        primary_container.createButton("Power Options", self.spawnLogout, self.gs.gray, self.gs.opacity, pos="bottom")
-        
-        for container in self.cm.containers.values():
-            container.createLabel(" ", "cpu_stats", 12, pos="bottom")
-    
+
         '''Populate Menus'''
         self.cm.poulateAllContainers()
 
-        # Start the battery update thread
         self.battery_thread = StatusThread()
         self.battery_thread.battery_updated.connect(primary_container.getHWStatus)
         self.battery_thread.start()
 
         self.cpu_thread = CPUThread()
-        self.cpu_thread.cpu_updated.connect(self.getCPUStatus)
+        self.cpu_thread.cpu_updated.connect(self.cm._getCPUStatus)
         self.cpu_thread.start()
 
         self.is_active = AppThread()

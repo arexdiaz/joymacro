@@ -4,6 +4,7 @@ from PyQt6.QtCore import Qt
 from functools import partial
 import time
 import logging
+import psutil
 
 
 logger = logging.getLogger("main")
@@ -23,17 +24,36 @@ class ContainerManager:
         return self.containers.get(sanitizeInput(id))
 
     def poulateAllContainers(self):
-        for label, container in self.containers.items():
+        for container in self.containers.values():
             container.populateContainer()
 
-    def toggleContainers(self):
-        for label, container_obj in self.containers.items():
-            container_obj.container.setVisible(False)
+    def toggleContainers(self, items=None):
+        items = self.containers.values() if not items else items
+        for container in items:
+            if container.childs:
+                self.toggleContainers(container.childs.values())
+            container.container.setVisible(False)
 
         self.getContainer("primary_container").container.setVisible(True)
     
     def deleteContainer(self, label):
         self.containers.pop(label).container.deleteLater()
+
+    def _getCPUStatus(self):
+        def recursive(values):
+            for container in values:
+                if container.childs:
+                    recursive(container.childs.values())
+                try:
+                    container.getWidget("cpu_stats").widget().setText(" ".join(cpu_status))
+                except KeyError:
+                    continue
+
+        cpu_usage = psutil.cpu_percent(percpu=True)
+        cpu_status = []
+        for i, usage in enumerate(cpu_usage):
+            cpu_status.append(f"CPU{i}: {usage}%")
+        recursive(self.containers.values())
 
 class ContainerProp:
     def __init__(self, height, width, gs, label=None, id=None):
@@ -69,6 +89,8 @@ class ContainerProp:
         inner_menu.setGeometry(0, 0, self.container.width(), self.container.height())
         inner_menu.setStyleSheet("background-color: transparent;")
         self.layout = QVBoxLayout(inner_menu)
+        self.createLabel(" ", "cpu_stats", 12, pos="bottom")
+
 
     def createLabel(self, text, id, font_size=21, bg_color="0,0,0", opacity=0, pos="top", solid=False):
         style = f"background-color: rgba({bg_color}, {opacity}); color: white; font-size: {font_size}px;"
@@ -226,11 +248,13 @@ class ContainerProp:
         self.empty_widget.pos = "top"
         self.empty_widget.setObjectName("empty")
         self.widgets[self.empty_widget.objectName()] = self.empty_widget
+        # Separate widgets into top and bottom arrays
+        bottom_widgets = [widget for widget in self.widgets.values() if widget.pos == "bottom"][::-1]
         
         for widget in self.widgets.values():
             if widget.pos == "top":
                 self.layout.addWidget(widget)
-        for widget in self.widgets.values():
+        for widget in bottom_widgets:
             if widget.pos == "bottom":
                 self.layout.addWidget(widget)
         self.layout.update()
