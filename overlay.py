@@ -111,7 +111,7 @@ class OverlayWindow(QMainWindow):
             QApplication.processEvents()
         else:
             self.getHWStatus()
-            self.updateProfile()
+            self.profile_container.updateProfile()
             self.setWindowFlags(self.flags)
             self.show()
             QApplication.processEvents()
@@ -144,23 +144,6 @@ class OverlayWindow(QMainWindow):
 
         button.setText(f"{label}: {button_state}")
         button.setStyleSheet(self.gs.buttonStyle(button_color, self.gs.button_font_size, self.gs.opacity))
-
-    def updateProfile(self):
-        current_profile = cmd.exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
-        for i in range(self.profile_container.layout.count()):
-            button = self.profile_container.layout.itemAt(i).widget()
-            if not isinstance(button, QPushButton):
-                continue
-            if button.text().endswith(self.profile_append):
-                button.setText(button.text().replace(self.profile_append, ""))
-            if button.text().split(":")[0] == current_profile:
-                button.setText(f"{button.text()}{self.profile_append}")
-
-    def changeProfile(self, name, value):
-        cmd_str = f"sudo /usr/sbin/nvpmodel -m {value}"
-        self.current_profile = name
-        cmd.exec(cmd_str)
-        self.updateProfile()
 
     def getHWStatus(self):
         essid = cmd.get_essid()
@@ -236,7 +219,11 @@ class OverlayWindow(QMainWindow):
 
         launcher_container = self.cm.addContainer(primary_container.createChildContainer(app_name))
         toolbox_container  = self.cm.addContainer(primary_container.createChildContainer(toolbox_name, pos="bottom"))
+
         self.profile_container = self.cm.addContainer(toolbox_container.createChildContainer(nvpm_name))
+        self.profile_container.updateProfile = types.MethodType(cmd.updateProfile, self.profile_container)
+        self.profile_container.changeProfile = types.MethodType(cmd.changeProfile, self.profile_container)
+        
         services_container = self.cm.addContainer(toolbox_container.createChildContainer(services_name))
 
         if logger.getEffectiveLevel() == logging.DEBUG:
@@ -265,8 +252,8 @@ class OverlayWindow(QMainWindow):
 
         '''Script Stuff'''
         profile_value = cmd.exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
-        self.profile_append = " ✓"
-        self.profiles = {
+        self.profile_container.check = " ✓"
+        self.profile_container.profiles = {
             "0": "Console",
             "1": "Handheld",
             "2": "OC CPU",
@@ -275,12 +262,12 @@ class OverlayWindow(QMainWindow):
             "5": "Perf All",
             "6": "Perf OC All"
         }
-        for value, name in self.profiles.items():
+        for value, name in self.profile_container.profiles.items():
             title = f"{value}: {name}"
             if value == profile_value:
-                title += self.profile_append
+                title += self.profile_container.check
                 self.current_profile = name
-            self.profile_container.createButton(title, partial(self.changeProfile, name, value))
+            self.profile_container.createButton(title, partial(self.profile_container.changeProfile, name, value))
 
 
         scripts = {

@@ -1,3 +1,4 @@
+from PyQt6.QtWidgets import QPushButton
 import logging
 import netifaces
 import requests
@@ -66,14 +67,33 @@ def onWindowOpen(self, window):
 
 def onWindowClose(self, window):
     id = str(window.pid)
-    window_obj = self.getChild(id)
+    child = self.getChild(id)
+    widget = self.getWidget(id)
 
-    if not window_obj:
+    self.removeWidget(id) if widget else logger.error(f"button: {id} not found")
+    
+    if not child:
+        logger.error(f"child container: {id} not found")
         return
-
-    if window_obj.container.isVisible():
-        window_obj.container.setVisible(False)
+    
+    if child.container.isVisible():
+        child.container.setVisible(False)
         self.container.setVisible(True)
 
-    self.removeWidget(id)
     self.removeChild(id)
+
+def updateProfile(self):
+    current_profile = exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
+    for i in range(self.layout.count()):
+        button = self.layout.itemAt(i).widget()
+        if not isinstance(button, QPushButton):
+            continue
+        if button.text().endswith(self.check):
+            button.setText(button.text().replace(self.check, ""))
+        if button.text().split(":")[0] == current_profile:
+            button.setText(f"{button.text()}{self.check}")
+
+def changeProfile(self, name, value):
+    self.current_profile = name
+    cmd = exec(f"sudo /usr/sbin/nvpmodel -m {value}")
+    self.updateProfile()

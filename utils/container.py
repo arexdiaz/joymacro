@@ -8,6 +8,9 @@ import logging
 
 logger = logging.getLogger("main")
 
+def sanitizeInput(string):
+    return string.lower().replace(" ", "_")
+
 class ContainerManager:
     def __init__(self):
         self.containers = {}
@@ -16,8 +19,8 @@ class ContainerManager:
         self.containers[container.id] = container
         return self.containers[container.id]
 
-    def getContainer(self, label):
-        return self.containers.get(label.lower().replace(" ", "_"))
+    def getContainer(self, id):
+        return self.containers.get(sanitizeInput(id))
 
     def poulateAllContainers(self):
         for label, container in self.containers.items():
@@ -39,7 +42,7 @@ class ContainerProp:
         if id:
             self.id = id
         else:
-            self.id = self.label.lower().replace(" ", "_") if self.label else None
+            self.id = sanitizeInput(self.label) if self.label else None
 
         self.widgets = {}
         self.childs = {}
@@ -70,7 +73,7 @@ class ContainerProp:
     def createLabel(self, text, id, font_size=21, bg_color="0,0,0", opacity=0, pos="top", solid=False):
         style = f"background-color: rgba({bg_color}, {opacity}); color: white; font-size: {font_size}px;"
         label = QLabel(text)
-        label.setObjectName(id.lower().replace(" ", "_"))
+        label.setObjectName(sanitizeInput(id))
         label.setStyleSheet(style if not solid else f"{style} border-top: 2px solid gray;")
         label.pos = pos
         self.widgets[label.objectName()] = label
@@ -78,7 +81,7 @@ class ContainerProp:
 
     def createButton(self, label, callback, bg_color="0,0,0", opacity=0, font_size=None, pos="top", id=None):
         button = QPushButton(label)
-        button.setObjectName(label.lower().replace(" ", "_") if not id else id)
+        button.setObjectName(sanitizeInput(label) if not id else id)
         button.setMinimumHeight(self.gs.elements_height)
         button.clicked.connect(callback)
         button.pos = pos
@@ -136,7 +139,7 @@ class ContainerProp:
 
     def createSlider(self, callback, label, value=0, min=0, max=100, pos="top"):
         slider = QSlider(Qt.Orientation.Horizontal)
-        slider.setObjectName(label.lower().replace(" ", "_"))
+        slider.setObjectName(sanitizeInput(label))
         slider.pos = pos
         slider.setMinimum(min)
         slider.setMaximum(max)
@@ -188,16 +191,16 @@ class ContainerProp:
         self.widgets[slider.objectName()] = slider
 
     def getChild(self, id):
-        return self.childs.get(id.lower().replace(" ", "_"))
+        return self.childs.get(sanitizeInput(id))
 
     def removeChild(self, id):
-        self.childs.pop(id).container.deleteLater()
+        self.childs.pop(sanitizeInput(id)).container.deleteLater()
 
     def getWidget(self, id):
-        return self.layout.itemAt(self.layout.indexOf(self.widgets[id]))
+        return self.layout.itemAt(self.layout.indexOf(self.widgets[sanitizeInput(id)]))
     
     def removeWidget(self, id):
-        key = id.lower().replace(" ", "_")
+        key = sanitizeInput(id)
         self.layout.removeWidget(self.widgets[key])
         self.widgets[key].deleteLater()
         self.widgets.pop(key)
