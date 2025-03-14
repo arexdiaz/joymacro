@@ -167,11 +167,12 @@ class OverlayWindow(QMainWindow):
         
         if name.lower() in self.proc_black_list:
             return
-
+        
+        # TODO: move container creation to winman_container
         sub = self.cm.addContainer(self.winman_container.createSubcontainer(f"{name}", id=str(pid)))
-        # sub.createButton("Fullscreen", sub.ext.toggleFullscreen)
-        # sub.createButton("Maximize", sub.ext.toggleMax)
-        # sub.createButton("Minimize (WIP)", sub.ext.toggleHide)
+        sub.createButton("Fullscreen", window.toggleFullscreen)
+        sub.createButton("Maximize", window.toggleMaximize)
+        sub.createButton("Minimize (WIP)", window.toggleMinimize)
         sub.createButton("Close", window.close)
         sub.populateContainer()
         self.winman_container.removeWidget("empty")
