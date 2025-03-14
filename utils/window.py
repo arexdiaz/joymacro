@@ -132,7 +132,6 @@ class Window:
             
     @property
     def get_fullscreen_type(self):
-        """Detect fullscreen type with fallback checks [[3]][[4]][[8]]"""
         try:
             # Check EWMH atoms first
             state = self.get_net_wm_state()
