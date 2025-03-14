@@ -244,15 +244,14 @@ class OverlayWindow(QMainWindow):
 
 
         scripts = {
-            "Tmux Session": "tmux new-session -d -s simple",
-            "Link Cores": "/home/pi/scripts/link_cores.sh",
-            "Update Overlay": "cd /home/pi/overlay && git fetch && git pull",
-            "Restart Joycond (WIP)": "echo hello"
+            "Tmux Session": partial(cmd.detachExec, "tmux new-session -d -s simple"),
+            "Link Cores": partial(cmd.detachExec, "/home/pi/scripts/link_cores.sh"),
+            "Update Overlay": partial(cmd.detachExec, "cd /home/pi/overlay && git fetch && git pull"),
+            "Restart Joycond (WIP)": logger.info("this is a test!")
         }
 
         for label_text, script in scripts.items():
-            toolbox_container.createButton(label_text, partial(cmd.detachExec, script))
-
+            toolbox_container.createButton(label_text, script)
 
         '''Apps Stuff'''                             
         apps = {
