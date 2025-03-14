@@ -4,6 +4,7 @@ from functools import partial
 from utils.container import ContainerManager, ContainerProp
 import logging
 import os
+import psutil
 import utils.commands as cmd
 import utils.window
 import types
