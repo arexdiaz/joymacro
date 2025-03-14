@@ -49,13 +49,10 @@ def get_essid(interface='wlp1s0'):
     return essid
 
 def onWindowOpen(self, window):
-    pid = window.pid
-    name = window.title
-    
     # if name.lower() in self.proc_black_list:
     #     return
     
-    sub = self.createChildContainer(f"{name}", id=str(pid))
+    sub = self.createChildContainer(f"{window.title}", id=str(window.id))
     sub.createButton("Fullscreen", window.toggleFullscreen)
     sub.createButton("Maximize", window.toggleMaximize)
     sub.createButton("Minimize (WIP)", window.toggleMinimize)
@@ -65,7 +62,7 @@ def onWindowOpen(self, window):
     self.populateContainer()
 
 def onWindowClose(self, window):
-    id = str(window.pid)
+    id = str(window.id)
     child = self.getChild(id)
     widget = self.getWidget(id)
 
