@@ -163,7 +163,7 @@ class OverlayWindow(QMainWindow):
         else:
             battery_status = ""
 
-        index = exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
+        index = cmd.exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
         self.profile_container.current_profile = self.profile_container.profiles[index]
 
         self.cm.getContainer("primary_container").getWidget("hwstat").widget().setText(
