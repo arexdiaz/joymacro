@@ -197,7 +197,10 @@ class ContainerProp:
         self.childs.pop(sanitizeInput(id)).container.deleteLater()
 
     def getWidget(self, id):
-        return self.layout.itemAt(self.layout.indexOf(self.widgets[sanitizeInput(id)]))
+        try:
+            return self.layout.itemAt(self.layout.indexOf(self.widgets[sanitizeInput(id)]))
+        except KeyError:
+            return None
     
     def removeWidget(self, id):
         key = sanitizeInput(id)

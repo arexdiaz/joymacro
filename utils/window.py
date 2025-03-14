@@ -5,7 +5,7 @@ from Xlib import X, Xatom, Xutil
 from Xlib.error import XError
 import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("main")
 
 class Window:
     def __init__(self, win_id, display):

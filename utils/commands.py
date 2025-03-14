@@ -9,7 +9,6 @@ import os
 logger = logging.getLogger("main")
 
 
-
 '''Commands go here'''
 def exec(command):
     result = subprocess.run(command, capture_output=True, shell=True, text=True)
