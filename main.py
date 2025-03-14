@@ -83,11 +83,11 @@ class Main:
 
                 time.sleep(0.2)
 
-        threading.Thread(target=read_sdl_events).start()
 
         gs = overlay_menu.GlobalStyle()
         app = overlay_menu.QApplication([])
         self.overlay = overlay_menu.OverlayWindow(gs)
+        threading.Thread(target=read_sdl_events).start()
         app.exec()
         
 if __name__ == "__main__":
