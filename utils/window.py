@@ -4,6 +4,7 @@ from Xlib.display import Display
 from Xlib import X, Xatom, Xutil
 from Xlib.error import XError
 import logging
+import os
 
 logger = logging.getLogger("main")
 
@@ -225,14 +226,18 @@ class WindowMonitor(QThread):
 
                     for win_id in added:
                         window = Window(win_id, display)
+                        if window.pid == os.pid():
+                            return
                         window_instances[win_id] = window
                         self.on_window_create.emit(window)
-                        logger.debug(f"Window created: ID={win_id}, PID={window.pid}, Title='{window.title}'")
+                        logger.debug(f"Window created: ID={window.id}, PID={window.pid}, Title='{window.title}'")
 
                     for win_id in removed:
                         window = window_instances.pop(win_id)
+                        if window.pid == os.pid():
+                            return
                         self.on_window_close.emit(window)
-                        logger.debug(f"Window closed: ID={win_id}, PID={window.pid}, Title='{window.title}'")
+                        logger.debug(f"Window closed: ID={window.id}, PID={window.pid}, Title='{window.title}'")
 
         except KeyboardInterrupt:
             display.close()

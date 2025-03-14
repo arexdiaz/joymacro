@@ -1,11 +1,12 @@
 from PyQt6.QtWidgets import QPushButton
+from PyQt6.QtCore import QTime, QDate
 import logging
 import netifaces
 import requests
 import threading
 import subprocess
 import os
-
+import psutil
 logger = logging.getLogger("main")
 
 
@@ -93,3 +94,30 @@ def changeProfile(self, name, value):
     self.current_profile = name
     cmd = exec(f"sudo /usr/sbin/nvpmodel -m {value}")
     self.updateProfile()
+
+def getHWStatus(self):
+    essid = get_essid()
+    current_time = QTime.currentTime().toString("h:mm AP")
+    current_date = QDate.currentDate().toString("MMM dd")
+    if essid != self.essid:
+        self.essid = essid
+        self.private_ip = get_private_ip()
+        self.public_ip = get_public_ip()
+
+    host_name = os.uname()
+    user = os.getlogin()
+
+    battery_percent = psutil.sensors_battery()
+    if battery_percent.power_plugged:
+        battery_status = " (Charging)"
+    else:
+        battery_status = ""
+
+    index = exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
+    self.getChild("oc_profiles").current_profile = self.profile_container.profiles[index]
+    self.getWidget("hwstat").widget().setText(
+            f"{current_date} {current_time}\n"\
+            f"{user}@{host_name}\n"\
+            f"ip: {self.private_ip} pub: {self.public_ip}\n"\
+            f"{self.profile_container.current_profile} {int(battery_percent.percent)}%{battery_status}"
+        )

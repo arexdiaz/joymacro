@@ -1,13 +1,9 @@
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton, QLabel
-from PyQt6.QtCore import Qt, QMetaObject, QThread, pyqtSignal, QDate, QTime, pyqtSlot
-from PyQt6 import sip
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget
+from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from functools import partial
 from utils.container import ContainerManager, ContainerProp
 import logging
-import threading
-import subprocess
 import os
-import psutil
 import utils.commands as cmd
 import utils.window
 import types
@@ -145,34 +141,6 @@ class OverlayWindow(QMainWindow):
         button.setText(f"{label}: {button_state}")
         button.setStyleSheet(self.gs.buttonStyle(button_color, self.gs.button_font_size, self.gs.opacity))
 
-    def getHWStatus(self):
-        essid = cmd.get_essid()
-        current_time = QTime.currentTime().toString("h:mm AP")
-        current_date = QDate.currentDate().toString("MMM dd")
-        if essid != self.essid:
-            self.essid = essid
-            self.private_ip = cmd.get_private_ip()
-            self.public_ip = cmd.get_public_ip()
-
-        host_name = cmd.exec("hostname").stdout.strip()
-        user = cmd.exec("whoami").stdout.strip()
-
-        battery_percent = psutil.sensors_battery()
-        if battery_percent.power_plugged:
-            battery_status = " (Charging)"
-        else:
-            battery_status = ""
-
-        index = cmd.exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
-        self.profile_container.current_profile = self.profile_container.profiles[index]
-
-        self.cm.getContainer("primary_container").getWidget("hwstat").widget().setText(
-                f"{current_date} {current_time}\n"\
-                f"{user}@{host_name}\n"\
-                f"ip: {self.private_ip} pub: {self.public_ip}\n"\
-                f"{self.profile_container.current_profile} {int(battery_percent.percent)}%{battery_status}"
-            )
-
     def getCPUStatus(self):
         cpu_usage = psutil.cpu_percent(percpu=True)
         cpu_status = []
@@ -203,6 +171,8 @@ class OverlayWindow(QMainWindow):
         primary_container.createLabel("Da Overlay Menu", "title", 28)
         primary_container.createLabel(" ", "hwstat", 16)
         primary_container.createLabel(" ", "separator", 4, solid=True)
+
+        primary_container.getHWStatus = types.MethodType(cmd.getHWStatus, primary_container)
         
         app_name = "App Launcher"
         toolbox_name = "Toolbox"
@@ -305,7 +275,7 @@ class OverlayWindow(QMainWindow):
 
         # Start the battery update thread
         self.battery_thread = StatusThread()
-        self.battery_thread.battery_updated.connect(self.getHWStatus)
+        self.battery_thread.battery_updated.connect(primary_container.getHWStatus)
         self.battery_thread.start()
 
         self.cpu_thread = CPUThread()
