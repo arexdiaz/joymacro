@@ -115,6 +115,10 @@ class OverlayWindow(QMainWindow):
         if self.isVisible():
             self.toggleVisibility()
 
+    def setBrightness(self):
+        sender = self.sender()
+        cmd.exec(f"brightnessctl --quiet set {sender.value()}")
+
     def toggleService(self, service):
         button = self.sender()
         label, status = button.text().split(":")
@@ -162,7 +166,6 @@ class OverlayWindow(QMainWindow):
         primary_container.createButton("Power Options", self.spawnLogout, self.gs.gray, self.gs.opacity, pos="bottom")
 
         primary_container.getHWStatus = types.MethodType(cmd.getHWStatus, primary_container)
-        primary_container.setBrightness = types.MethodType(cmd.setBrightness, primary_container)
 
         winman_container = self.cm.addContainer(primary_container.createChildContainer(wm_name))
         winman_container.onWindowOpen = types.MethodType(cmd.onWindowOpen, winman_container)
@@ -246,7 +249,7 @@ class OverlayWindow(QMainWindow):
 
         # Slider is absolute last
         primary_container.createSlider(
-            primary_container.setBrightness,
+            self.setBrightness,
             "Brightness",
             value=int(cmd.exec("brightnessctl get").stdout.strip()), # TODO: This can be an emiter cause by an event in x11
             min=1, max=255,

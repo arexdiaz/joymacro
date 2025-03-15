@@ -49,10 +49,6 @@ def get_essid(interface='wlp1s0'):
         essid = "N/A"
     return essid
 
-def setBrightness(self):
-    sender = self.sender()
-    exec(f"brightnessctl --quiet set {sender.value()}")
-
 def onWindowOpen(self, window):
     # if name.lower() in self.proc_black_list:
     #     return
