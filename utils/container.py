@@ -248,7 +248,7 @@ class ContainerProp:
         self.empty_widget.pos = "top"
         self.empty_widget.setObjectName("empty")
         self.widgets[self.empty_widget.objectName()] = self.empty_widget
-        # Separate widgets into top and bottom arrays
+        
         bottom_widgets = [widget for widget in self.widgets.values() if widget.pos == "bottom"][::-1]
         
         for widget in self.widgets.values():

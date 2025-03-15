@@ -4,7 +4,6 @@ from functools import partial
 from utils.container import ContainerManager, ContainerProp
 import logging
 import os
-import psutil
 import utils.commands as cmd
 import utils.window
 import types
@@ -74,13 +73,8 @@ class OverlayWindow(QMainWindow):
         self.gs = gs
         self.initUI()
 
-        self.proc_black_list = [
-            "polybar-mybar_DSI-0",
-            "overlay_menu"
-        ]
-
     def initUI(self):
-        self.setWindowTitle("overlay_menu")
+        self.setWindowTitle("da_overlay")
         self.flags = Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint
         self.setWindowFlags(self.flags)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
@@ -115,13 +109,9 @@ class OverlayWindow(QMainWindow):
         os._exit(0)
 
     '''Commands go here'''
-    def setBrightness(self):
-        sender = self.sender()
-        cmd.exec(f"brightnessctl --quiet set {sender.value()}")
-
     def spawnLogout(self):
-        power_cmd = "qdbus org.kde.LogoutPrompt /LogoutPrompt org.kde.LogoutPrompt.promptShutDown"
-        cmd.exec(power_cmd)
+        line = "qdbus org.kde.LogoutPrompt /LogoutPrompt org.kde.LogoutPrompt.promptShutDown"
+        cmd.exec(line)
         if self.isVisible():
             self.toggleVisibility()
 
@@ -172,6 +162,7 @@ class OverlayWindow(QMainWindow):
         primary_container.createButton("Power Options", self.spawnLogout, self.gs.gray, self.gs.opacity, pos="bottom")
 
         primary_container.getHWStatus = types.MethodType(cmd.getHWStatus, primary_container)
+        primary_container.setBrightness = types.MethodType(cmd.setBrightness, primary_container)
 
         winman_container = self.cm.addContainer(primary_container.createChildContainer(wm_name))
         winman_container.onWindowOpen = types.MethodType(cmd.onWindowOpen, winman_container)
@@ -254,8 +245,13 @@ class OverlayWindow(QMainWindow):
            launcher_container.createButton(label_text, partial(cmd.detachExec, app))
 
         # Slider is absolute last
-        brightness = cmd.exec("brightnessctl get").stdout.strip()
-        primary_container.createSlider(self.setBrightness, "Brightness", value=int(brightness), min=1, max=255, pos="top")
+        primary_container.createSlider(
+            primary_container.setBrightness,
+            "Brightness",
+            value=int(cmd.exec("brightnessctl get").stdout.strip()), # TODO: This can be an emiter cause by an event in x11
+            min=1, max=255,
+            pos="top"
+        )
 
         '''Populate Menus'''
         self.cm.poulateAllContainers()
