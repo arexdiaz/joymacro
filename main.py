@@ -35,7 +35,7 @@ class Mouse:
             self.process.terminate()
             self.process.wait()
             self.process = None
-    
+
     def start(self):
         self.process = subprocess.Popen("unclutter -idle 1 -root", shell=True)
 
@@ -89,7 +89,7 @@ class Main:
         self.overlay = overlay_menu.OverlayWindow(gs)
         threading.Thread(target=read_sdl_events).start()
         app.exec()
-        
+
 if __name__ == "__main__":
     try:
         Main().loop()

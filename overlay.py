@@ -80,7 +80,7 @@ class OverlayWindow(QMainWindow):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         screen_size = QApplication.primaryScreen().size()
         self.setGeometry(QApplication.primaryScreen().geometry())
-        
+
         self.cm = ContainerManager()
 
         self.menu_width = int(self.width() * 0.3)
@@ -132,13 +132,13 @@ class OverlayWindow(QMainWindow):
 
         button.setText(f"{label}: {button_state}")
         button.setStyleSheet(self.gs.buttonStyle(button_color, self.gs.button_font_size, self.gs.opacity))
-    
+
     def isAppActive(self):
         is_active = QApplication.activeWindow() == self
         if not is_active and self.isVisible():
             self.raise_()
             self.activateWindow()
-        
+
     '''End Commands'''
 
 
@@ -148,7 +148,7 @@ class OverlayWindow(QMainWindow):
         pc = ContainerProp(self.height(), self.width(), self.gs, label=self.pc_name)
         pc.createContainer(self, self.width() - self.menu_width, 0, self.menu_width, \
                                            self.height(), self.gs.menu_color)
-        
+
         app_name = "App Launcher"
         toolbox_name = "Toolbox"
         nvpm_name = "OC Profile"
@@ -182,7 +182,7 @@ class OverlayWindow(QMainWindow):
         self.profile_container = self.cm.addContainer(toolbox_container.createChildContainer(nvpm_name))
         self.profile_container.updateProfile = types.MethodType(cmd.updateProfile, self.profile_container)
         self.profile_container.changeProfile = types.MethodType(cmd.changeProfile, self.profile_container)
-        
+
         services_container = self.cm.addContainer(toolbox_container.createChildContainer(services_name))
 
         if logger.getEffectiveLevel() == logging.DEBUG:
@@ -239,7 +239,7 @@ class OverlayWindow(QMainWindow):
         for label_text, script in scripts.items():
             toolbox_container.createButton(label_text, script)
 
-        '''Apps Stuff'''                             
+        '''Apps Stuff'''
         apps = {
             "Emulation Station": "es-de",
             "Konsole": "konsole",

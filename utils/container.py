@@ -35,7 +35,7 @@ class ContainerManager:
             container.container.setVisible(False)
 
         self.getContainer("primary_container").container.setVisible(True)
-    
+
     def deleteContainer(self, label):
         self.containers.pop(label).container.deleteLater()
 
@@ -133,7 +133,7 @@ class ContainerProp:
             self.gs.menu_color,
             visible=False
         )
-        
+
         self.childs[child.id] = child
         child.parent = self
         child.createLabel(f"{label}", "header", 28)
@@ -215,15 +215,19 @@ class ContainerProp:
     def getChild(self, id):
         return self.childs.get(sanitizeInput(id))
 
-    def removeChild(self, id):
-        self.childs.pop(sanitizeInput(id)).container.deleteLater()
+    def removeChild(self, child):
+        child.pop(sanitizeInput(id))
+        for i in child.widgets:
+            child.removeWidget(i.id)
+
+        child.container.deleteLater()
 
     def getWidget(self, id):
         try:
             return self.layout.itemAt(self.layout.indexOf(self.widgets[sanitizeInput(id)]))
         except KeyError:
             return None
-    
+
     def removeWidget(self, id):
         key = sanitizeInput(id)
         self.layout.removeWidget(self.widgets[key])
@@ -242,15 +246,15 @@ class ContainerProp:
     def populateContainer(self):
         total_widget_height = sum(widget.minimumHeight() for widget in self.widgets.values())
         empty_height = max(0, self.screen_height - total_widget_height)
-        
+
         self.empty_widget = QWidget(self.container)
         self.empty_widget.setFixedSize(self.container.width(), empty_height)
         self.empty_widget.pos = "top"
         self.empty_widget.setObjectName("empty")
         self.widgets[self.empty_widget.objectName()] = self.empty_widget
-        
+
         bottom_widgets = [widget for widget in self.widgets.values() if widget.pos == "bottom"][::-1]
-        
+
         for widget in self.widgets.values():
             if widget.pos == "top":
                 self.layout.addWidget(widget)

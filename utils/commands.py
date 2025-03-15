@@ -50,14 +50,13 @@ def get_essid(interface='wlp1s0'):
     return essid
 
 def onWindowOpen(self, window):
-    # if name.lower() in self.proc_black_list:
-    #     return
-    
     sub = self.createChildContainer(f"{window.title}", id=str(window.id))
     sub.createButton("Fullscreen", window.toggleFullscreen)
     sub.createButton("Maximize", window.toggleMaximize)
     sub.createButton("Minimize (WIP)", window.toggleMinimize)
     sub.createButton("Close", window.close)
+    stats = sub.createChildContainer("Info", pos="bottom")
+    stats.createLabel("Test")
     sub.populateContainer()
     self.removeWidget("empty")
     self.populateContainer()
@@ -68,16 +67,16 @@ def onWindowClose(self, window):
     widget = self.getWidget(id)
 
     self.removeWidget(id) if widget else logger.error(f"button: {id} not found")
-    
+
     if not child:
         logger.error(f"child container: {id} not found")
         return
-    
+
     if child.container.isVisible():
         child.container.setVisible(False)
         self.container.setVisible(True)
 
-    self.removeChild(id)
+    self.removeChild(child)
 
 def updateProfile(self):
     current_profile = exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
