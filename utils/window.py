@@ -3,6 +3,7 @@ from Xlib.protocol.event import ClientMessage
 from Xlib.display import Display
 from Xlib import X, Xatom, Xutil
 from Xlib.error import XError
+import json
 import logging
 import os
 
@@ -15,6 +16,7 @@ class Window:
         self.window = display.create_resource_object("window", win_id)
         self.pid = self.get_pid()
         self.title = self.get_title()
+        self.binary = self.get_binary()
 
     def get_pid(self):
         try:
@@ -35,6 +37,18 @@ class Window:
             return prop.value.decode("latin1") if prop else "Unknown"
         except XError:
             return "Unknown"
+
+    def get_binary(self):
+        try:
+            if self.pid is None:
+                return None
+            exe_path = f"/proc/{self.pid}/exe"
+            if os.path.exists(exe_path):
+                return os.readlink(exe_path).split("/")[-1]
+            return None
+        except Exception as e:
+            logger.error(f"Failed to get binary for window {self.id}: {e}")
+            return None
 
     def get_net_wm_state(self):
         try:
@@ -198,6 +212,11 @@ class WindowMonitor(QThread):
         super().__init__()
 
     def run(self):
+        current_file_path = os.path.abspath(os.path.join(__file__, os.pardir))
+        current_directory = os.path.dirname(current_file_path)
+
+        blacklist = json.loads(open(f"{current_directory}/blacklist.json", "r").read()).get("binaries")
+
         display = Display()
         root = display.screen().root
         net_client_list = display.intern_atom("_NET_CLIENT_LIST")
@@ -210,6 +229,8 @@ class WindowMonitor(QThread):
 
         for win_id in existing_windows:
             window = Window(win_id, display)
+            if window.binary in blacklist:
+                continue
             window_instances[win_id] = window
             self.on_window_create.emit(window)
             logger.debug(f"Initialized: ID={win_id}, PID={window.pid}, Title='{window.title}'")
@@ -227,7 +248,9 @@ class WindowMonitor(QThread):
                     for win_id in added:
                         window = Window(win_id, display)
                         if window.pid == os.getpid():
-                            return
+                            continue
+                        if window.binary in blacklist:
+                            continue
                         window_instances[win_id] = window
                         self.on_window_create.emit(window)
                         logger.debug(f"Window created: ID={window.id}, PID={window.pid}, Title='{window.title}'")
@@ -235,7 +258,7 @@ class WindowMonitor(QThread):
                     for win_id in removed:
                         window = window_instances.pop(win_id)
                         if window.pid == os.getpid():
-                            return
+                            continue
                         self.on_window_close.emit(window)
                         logger.debug(f"Window closed: ID={window.id}, PID={window.pid}, Title='{window.title}'")
 
