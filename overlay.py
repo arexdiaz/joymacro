@@ -155,6 +155,8 @@ class OverlayWindow(QMainWindow):
         services_name = "Services"
         wm_name = "Active Windows"
         debug_name = "debug_menu"
+        wifi = "Wifi (WIP)"
+        bluetooth = "Bluetooth (WIP)"
 
         primary_container = self.cm.addContainer(pc)
         primary_container.essid = None
@@ -184,6 +186,8 @@ class OverlayWindow(QMainWindow):
         self.profile_container.changeProfile = types.MethodType(cmd.changeProfile, self.profile_container)
 
         services_container = self.cm.addContainer(toolbox_container.createChildContainer(services_name))
+        wifi_container = self.cm.addContainer(toolbox_container.createChildContainer(wifi))
+        bluetooth_container = self.cm.addContainer(toolbox_container.createChildContainer(bluetooth))
 
         if logger.getEffectiveLevel() == logging.DEBUG:
             debug_container = self.cm.addContainer(primary_container.createChildContainer(debug_name))
