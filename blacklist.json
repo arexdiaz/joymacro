@@ -2,5 +2,10 @@
     "binaries": [
         "polybar",
         "plasmashell"
-    ]
+    ],
+    "apps": {
+        "gmloadernext.aarch64": {
+            "auto_fullscreen": true
+        }
+    }
 }

@@ -215,12 +215,19 @@ class ContainerProp:
     def getChild(self, id):
         return self.childs.get(sanitizeInput(id))
 
-    def removeChild(self, child):
-        child.pop(sanitizeInput(id))
-        for i in child.widgets:
-            child.removeWidget(i.id)
+    def removeChild(self, id):
+        child = self.childs.pop(sanitizeInput(id))
+
+        if child.childs:
+            for sub_child in list(child.childs.values()):
+                child.removeChild(sub_child.id)
+
+        for i in list(child.widgets.values()):
+            child.removeWidget(i.objectName())
 
         child.container.deleteLater()
+        child.widgets.clear()
+        child.childs.clear()
 
     def getWidget(self, id):
         try:

@@ -55,9 +55,17 @@ def onWindowOpen(self, window):
     sub.createButton("Maximize", window.toggleMaximize)
     sub.createButton("Minimize", window.toggleMinimize)
     sub.createButton("Close", window.close)
-    stats = sub.createChildContainer("debug_info (WIP)", pos="bottom")
-    stats.createLabel("Hello World!", "test_label")
-    stats.populateContainer()
+    # stats = sub.createChildContainer("debug_info (WIP)", pos="bottom")
+    # stats.createLabel(f"ID: {window.id}\n" \
+                        # f"PID: {window.pid}\n" \
+                        # f"Title: {window.title}\n" \
+                        # f"Binary: {window.binary}\n" \
+                        # f"Is Minimized: {window.is_minimized}\n" \
+                        # f"Is Maximized: {window.is_maximized}\n" \
+                        # f"Is Fullscreen: {window.is_fullscreen}\n" \
+                        # f"Type: {window.get_fullscreen_type}\n" \
+                        # f"Is Active: {window.is_active}", "window_id_label", 16)
+    # stats.populateContainer()
     sub.populateContainer()
     self.removeWidget("empty")
     self.populateContainer()
@@ -77,7 +85,7 @@ def onWindowClose(self, window):
         child.container.setVisible(False)
         self.container.setVisible(True)
 
-    self.removeChild(child)
+    self.removeChild(id)
 
 def updateProfile(self):
     current_profile = exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()

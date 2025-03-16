@@ -210,12 +210,14 @@ class WindowMonitor(QThread):
 
     def __init__(self):
         super().__init__()
+        self.win_id = None
 
     def run(self):
         current_file_path = os.path.abspath(os.path.join(__file__, os.pardir))
         current_directory = os.path.dirname(current_file_path)
 
         blacklist = json.loads(open(f"{current_directory}/blacklist.json", "r").read()).get("binaries")
+        properties = json.loads(open(f"{current_directory}/blacklist.json", "r").read()).get("apps")
 
         display = Display()
         root = display.screen().root
@@ -246,11 +248,25 @@ class WindowMonitor(QThread):
                     removed = window_instances.keys() - new_windows
 
                     for win_id in added:
-                        window = Window(win_id, display)
-                        if window.pid == os.getpid():
+                        if win_id == self.win_id:
                             continue
+                        try:
+                            window = Window(win_id, display)
+                        except RuntimeError:
+                            continue
+
+                        if not self.win_id and window.pid == os.getpid():
+                            self.win_id = window.id
+                            continue
+
                         if window.binary in blacklist:
                             continue
+
+                        if window.binary in properties:
+                            app = properties.get(window.binary)
+                            if app.get("auto_fullscreen") and not window.is_fullscreen:
+                                window.toggleFullscreen()
+
                         window_instances[win_id] = window
                         self.on_window_create.emit(window)
                         logger.debug(f"Window created: ID={window.id}, PID={window.pid}, Title='{window.title}'")
