@@ -269,14 +269,14 @@ class WindowMonitor(QThread):
 
                         window_instances[win_id] = window
                         self.on_window_create.emit(window)
-                        logger.debug(f"Window created: ID={window.id}, PID={window.pid}, Title='{window.title}'")
+                        logger.debug(f"Window created:, Title='{window.title}', Binary='{window.binary}'")
 
                     for win_id in removed:
                         window = window_instances.pop(win_id)
                         if window.pid == os.getpid():
                             continue
                         self.on_window_close.emit(window)
-                        logger.debug(f"Window closed: ID={window.id}, PID={window.pid}, Title='{window.title}'")
+                        logger.debug(f"Window closed: Title='{window.title}', Binary='{window.binary}'")
 
         except KeyboardInterrupt:
             display.close()

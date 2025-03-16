@@ -44,10 +44,7 @@ class ContainerManager:
             for container in values:
                 if container.childs:
                     recursive(container.childs.values())
-                try:
-                    container.getWidget("cpu_stats").widget().setText(" ".join(cpu_status))
-                except KeyError:
-                    continue
+                container.getWidget("cpu_stats").widget().setText(" ".join(cpu_status))
 
         cpu_usage = psutil.cpu_percent(percpu=True)
         cpu_status = []
@@ -115,7 +112,7 @@ class ContainerProp:
         self.widgets[button.objectName()] = button
         return button
 
-    def createChildContainer(self, label, pos="top", id=None):
+    def createChildContainer(self, label, pos="top", id=None, callback=None):
         def _switchContainer(first_container, second_container):
             first_container.container.setVisible(False)
             second_container.container.setVisible(True)
@@ -147,9 +144,10 @@ class ContainerProp:
             self.gs.button_font_size
         )
 
+        callback = partial(_switchContainer, self, child) if not callback else callback
         self.createButton(
             label,
-            partial(_switchContainer, self, child),
+            callback,
             self.gs.gray,
             self.gs.opacity,
             self.gs.button_font_size,

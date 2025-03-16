@@ -6,6 +6,12 @@
     "apps": {
         "gmloadernext.aarch64": {
             "auto_fullscreen": true
+        },
+        "reVC": {
+            "auto_fullscreen": true
+        },
+        "re3": {
+            "auto_fullscreen": true
         }
     }
 }
