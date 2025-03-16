@@ -83,17 +83,17 @@ def onWindowOpen(self, window):
     for label, action in actions:
         child_container.createButton(label, action)
 
-    stats_container = child_container.createChildContainer(
-        "debug_info (WIP)",
-        pos="bottom",
-        callback=partial(initStats, stats_container, window)
-    )
+    stats_container = child_container.createChildContainer("debug_info (WIP)", pos="bottom")
     stats_container.is_init = False
     stats_container.populateContainer()
 
     child_container.populateContainer()
     self.removeWidget("empty")
     self.populateContainer()
+
+    debug_button = child_container.getWidget("debug_info_(wip)").widget()
+    debug_button.disconnect()
+    debug_button.clicked.connect(partial(initStats, stats_container, window))
 
 def onWindowClose(self, window):
     id = str(window.id)
