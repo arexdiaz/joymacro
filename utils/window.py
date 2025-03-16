@@ -216,8 +216,7 @@ class WindowMonitor(QThread):
         current_file_path = os.path.abspath(os.path.join(__file__, os.pardir))
         current_directory = os.path.dirname(current_file_path)
 
-        blacklist = json.loads(open(f"{current_directory}/blacklist.json", "r").read()).get("binaries")
-        properties = json.loads(open(f"{current_directory}/blacklist.json", "r").read()).get("apps")
+        blacklist, saved_programs = json.loads(open(f"{current_directory}/properties.json", "r").read()).values()
 
         display = Display()
         root = display.screen().root
@@ -262,8 +261,8 @@ class WindowMonitor(QThread):
                         if window.binary in blacklist:
                             continue
 
-                        if window.binary in properties:
-                            app = properties.get(window.binary)
+                        if window.binary in saved_programs:
+                            app = saved_programs.get(window.binary)
                             if app.get("auto_fullscreen") and not window.is_fullscreen:
                                 window.toggleFullscreen()
 

@@ -51,41 +51,49 @@ def get_essid(interface='wlp1s0'):
         essid = "N/A"
     return essid
 
-def initStats(self, window):
-    if not self.is_init:
-        self.createLabel(f"ID: {window.id}\n" \
-                            f"PID: {window.pid}\n" \
-                            f"Title: {window.title}\n" \
-                            f"Binary: {window.binary}\n" \
-                            f"Is Minimized: {window.is_minimized}\n" \
-                            f"Is Maximized: {window.is_maximized}\n" \
-                            f"Is Fullscreen: {window.is_fullscreen}\n" \
-                            f"Type: {window.get_fullscreen_type}\n" \
-                            f"Is Active: {window.is_active}", "window_id_label", 16)
-        self.removeWidget("empty")
-        self.populateContainer()
-        self.is_init = True
+def initStats(stats, window):
+    if not stats.is_init:
+        stats_text = (
+            f"ID: {window.id}\n"
+            f"PID: {window.pid}\n"
+            f"Title: {window.title}\n"
+            f"Binary: {window.binary}\n"
+            f"Is Minimized: {window.is_minimized}\n"
+            f"Is Maximized: {window.is_maximized}\n"
+            f"Is Fullscreen: {window.is_fullscreen}\n"
+            f"Type: {window.get_fullscreen_type}\n"
+            f"Is Active: {window.is_active}"
+        )
+        stats.createLabel(stats_text, "window_id_label", 16)
+        stats.removeWidget("empty")
+        stats.populateContainer()
+        stats.is_init = True
 
-    self.parent.container.setVisible(False)
-    self.container.setVisible(True)
+    stats.parent.container.setVisible(False)
+    stats.container.setVisible(True)
 
 def onWindowOpen(self, window):
-    sub = self.createChildContainer(f"{window.title}", id=str(window.id))
-    sub.createButton("Fullscreen", window.toggleFullscreen)
-    sub.createButton("Maximize", window.toggleMaximize)
-    sub.createButton("Minimize", window.toggleMinimize)
-    sub.createButton("Close", window.close)
-    stats = sub.createChildContainer("debug_info (WIP)", pos="bottom")
-    stats.is_init = False
-    stats.initStats = types.MethodType(initStats, stats)
-    stats.populateContainer()
-    sub.populateContainer()
+    child_container = self.createChildContainer(window.title, id=str(window.id))
+    actions = [
+        ("Fullscreen", window.toggleFullscreen),
+        ("Maximize", window.toggleMaximize),
+        ("Minimize", window.toggleMinimize),
+        ("Close", window.close),
+    ]
+    for label, action in actions:
+        child_container.createButton(label, action)
+
+    stats_container = child_container.createChildContainer(
+        "debug_info (WIP)",
+        pos="bottom",
+        callback=partial(initStats, stats_container, window)
+    )
+    stats_container.is_init = False
+    stats_container.populateContainer()
+
+    child_container.populateContainer()
     self.removeWidget("empty")
     self.populateContainer()
-    button = sub.getWidget("debug_info_(wip)").widget()
-    button.disconnect()
-    button.clicked.connect(partial(stats.initStats, window))
-
 
 def onWindowClose(self, window):
     id = str(window.id)
