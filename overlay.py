@@ -3,6 +3,7 @@ from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from functools import partial
 from utils.container import ContainerManager, ContainerProp
 import logging
+import json
 import os
 import utils.commands as cmd
 import utils.window
@@ -72,6 +73,8 @@ class OverlayWindow(QMainWindow):
         super().__init__()
         self.gs = gs
         self.initUI()
+        self.current_file_path = os.path.abspath(os.path.join(__file__, os.pardir))
+        self.current_directory = os.path.dirname(self.current_file_path)
 
     def initUI(self):
         self.setWindowTitle("da_overlay")
@@ -140,7 +143,6 @@ class OverlayWindow(QMainWindow):
             self.activateWindow()
 
     '''End Commands'''
-
 
     '''Init Thingy'''
     def initMenu(self):
@@ -244,14 +246,10 @@ class OverlayWindow(QMainWindow):
             toolbox_container.createButton(label_text, script)
 
         '''Apps Stuff'''
-        apps = {
-            "Emulation Station": "es-de",
-            "Konsole": "konsole",
-        }
-        for label_text, app in apps.items():
-           launcher_container.createButton(label_text, partial(cmd.detachExec, app))
+        apps = json.loads(open(f"{self.current_directory}/apps.json", "r").read()).values().get("launcher")
+        for app in apps:
+           launcher_container.createButton(app.get("title"), partial(cmd.detachExec, app.get("binary")))
 
-        # Slider is absolute last
         primary_container.createSlider(
             self.setBrightness,
             "Brightness",

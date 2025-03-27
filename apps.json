@@ -1,0 +1,16 @@
+{
+  "launcher": [
+    {
+      "title": "Emulation Station",
+      "binary": "es-de"
+    },
+    {
+      "title": "Pi Apps",
+      "binary": "pi-apps"
+    },
+    {
+      "title": "Konsole",
+      "binary": "konsole"
+    }
+  ]
+}
