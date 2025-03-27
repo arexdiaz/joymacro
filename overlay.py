@@ -171,6 +171,8 @@ class OverlayWindow(QMainWindow):
 
         primary_container.getHWStatus = types.MethodType(cmd.getHWStatus, primary_container)
 
+        launcher_container = self.cm.addContainer(primary_container.createChildContainer(app_name))
+        
         winman_container = self.cm.addContainer(primary_container.createChildContainer(wm_name))
         winman_container.onWindowOpen = types.MethodType(cmd.onWindowOpen, winman_container)
         winman_container.onWindowClose = types.MethodType(cmd.onWindowClose, winman_container)
@@ -180,7 +182,6 @@ class OverlayWindow(QMainWindow):
         window_monitor.on_window_close.connect(winman_container.onWindowClose)
         window_monitor.start()
 
-        launcher_container = self.cm.addContainer(primary_container.createChildContainer(app_name))
         toolbox_container  = self.cm.addContainer(primary_container.createChildContainer(toolbox_name, pos="bottom"))
 
         self.profile_container = self.cm.addContainer(toolbox_container.createChildContainer(nvpm_name))
