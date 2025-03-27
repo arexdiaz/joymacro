@@ -246,7 +246,7 @@ class OverlayWindow(QMainWindow):
             toolbox_container.createButton(label_text, script)
 
         '''Apps Stuff'''
-        apps = json.loads(open(f"{self.current_directory}/apps.json", "r").read()).values().get("launcher")
+        apps = json.loads(open(f"{self.current_file_path}/apps.json", "r").read()).get("launcher")
         for app in apps:
            launcher_container.createButton(app.get("title"), partial(cmd.detachExec, app.get("binary")))
 
