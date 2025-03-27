@@ -171,6 +171,25 @@ class Window:
             logger.debug(f"Always on top for window {self.id}")
         except XError as e:
             logger.error(f"Toggle failed: {e}")
+    
+    def toggleNoTitlebarFrame(self):
+        try:
+            mwm_hints = self.display.intern_atom("_MOTIF_WM_HINTS")
+            hints = [2, 0, 0, 0, 0]
+
+            data = ClientMessage(
+                window=self.window,
+                client_type=mwm_hints,
+                data=(32, hints)
+            )
+
+            mask = X.SubstructureRedirectMask | X.SubstructureNotifyMask
+            self.display.send_event(self.window, data, mask)
+            self.display.flush()
+
+            logger.debug(f"Removed title bar and frame for window {self.id}")
+        except XError as e:
+            logger.error(f"Failed to remove title bar and frame for window {self.id}: {e}")
 
     @property
     def get_fullscreen_type(self):

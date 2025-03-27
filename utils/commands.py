@@ -78,12 +78,20 @@ def onWindowOpen(self, window):
         ("Fullscreen", window.toggleFullscreen),
         ("Maximize", window.toggleMaximize),
         ("Minimize", window.toggleMinimize),
+        ("Close", window.close),
+    ]
+    extra_actions = [
         ("Set Focus", window.setFocus),
         ("Keep Above Others", window.toggleAlwaysOnTop),
-        ("Close", window.close),
+        ("No Tilebar and Frame", window.toggleNoTitlebarFrame),
     ]
     for label, action in actions:
         child_container.createButton(label, action)
+
+    extra_container = child_container.createChildContainer("More Actions")
+    for label, action in extra_actions:
+        extra_container.createButton(label, action)
+    extra_container.populateContainer()
 
     stats_container = child_container.createChildContainer("debug_info (WIP)", pos="bottom")
     stats_container.is_init = False
