@@ -72,9 +72,9 @@ class OverlayWindow(QMainWindow):
     def __init__(self, gs):
         super().__init__()
         self.gs = gs
-        self.initUI()
         self.current_file_path = os.path.abspath(os.path.join(__file__, os.pardir))
         self.current_directory = os.path.dirname(self.current_file_path)
+        self.initUI()
 
     def initUI(self):
         self.setWindowTitle("da_overlay")
