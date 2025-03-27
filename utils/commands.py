@@ -78,25 +78,24 @@ def onWindowOpen(self, window):
         ("Fullscreen", window.toggleFullscreen),
         ("Maximize", window.toggleMaximize),
         ("Minimize", window.toggleMinimize),
-        ("Focus", window.setFocus),
+        ("Set Focus", window.setFocus),
         ("Close", window.close),
     ]
     extra_actions = [
         ("Keep Above Others", window.toggleAlwaysOnTop),
         ("No Tilebar and Frame (WIP)", window.toggleNoTitlebarFrame),
     ]
-
     for label, action in actions:
         child_container.createButton(label, action)
-
-    stats_container = child_container.createChildContainer("debug_info (WIP)", pos="bottom")
-    stats_container.is_init = False
-    stats_container.populateContainer()
 
     extra_container = child_container.createChildContainer("More Actions", pos="bottom")
     for label, action in extra_actions:
         extra_container.createButton(label, action)
     extra_container.populateContainer()
+
+    stats_container = child_container.createChildContainer("debug_info (WIP)", pos="bottom")
+    stats_container.is_init = False
+    stats_container.populateContainer()
 
     child_container.populateContainer()
     self.removeWidget("empty")
