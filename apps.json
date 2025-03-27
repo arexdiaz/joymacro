@@ -5,6 +5,10 @@
       "binary": "es-de"
     },
     {
+      "title": "Lutris",
+      "binary": "lutris"
+    },
+    {
       "title": "Pi Apps",
       "binary": "pi-apps"
     },
