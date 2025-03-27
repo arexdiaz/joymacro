@@ -86,11 +86,7 @@ class Window:
                 event = ClientMessage(
                     window=self.window,
                     client_type=wm_state,
-                    data=(32, [
-                        2,
-                        fullscreen,
-                        0, 0, 0
-                    ])
+                    data=(32, [2, fullscreen, 0, 0, 0])
                 )
 
                 mask = X.SubstructureRedirectMask | X.SubstructureNotifyMask
@@ -110,12 +106,7 @@ class Window:
             event = ClientMessage(
                 window=self.window,
                 client_type=wm_state,
-                data=(32, [
-                    2,
-                    max_vert,
-                    max_horz,
-                    0, 0
-                ])
+                data=(32, [2, max_vert, max_horz, 0, 0])
             )
 
             mask = X.SubstructureRedirectMask | X.SubstructureNotifyMask
@@ -142,6 +133,42 @@ class Window:
             self.display.flush()
 
             logger.debug(f"Minimize for window {self.id}")
+        except XError as e:
+            logger.error(f"Toggle failed: {e}")
+    
+    def setFocus(self):
+        try:
+            wm_active_window = self.display.intern_atom("_NET_ACTIVE_WINDOW")
+            event = ClientMessage(
+                window=self.window,
+                client_type=wm_active_window,
+                data=(32, [2, X.CurrentTime, 0, 0, 0])
+            )
+
+            mask = X.SubstructureRedirectMask | X.SubstructureNotifyMask
+            self.display.send_event(self.display.screen().root, event, mask)
+            self.display.flush()
+
+            logger.debug(f"Focused window {self.id}")
+        except XError as e:
+            logger.error(f"Failed to focus window {self.id}: {e}")
+
+    def toggleAlwaysOnTop(self):
+        try:
+            wm_state = self.display.intern_atom("_NET_WM_STATE")
+            above = self.display.intern_atom("_NET_WM_STATE_ABOVE")
+
+            event = ClientMessage(
+                window=self.window,
+                client_type=wm_state,
+                data=(32, [ 2, above, 0, 0, 0])
+            )
+
+            mask = X.SubstructureRedirectMask | X.SubstructureNotifyMask
+            self.display.send_event(self.display.screen().root, event, mask)
+            self.display.flush()
+
+            logger.debug(f"Always on top for window {self.id}")
         except XError as e:
             logger.error(f"Toggle failed: {e}")
 

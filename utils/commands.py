@@ -78,6 +78,8 @@ def onWindowOpen(self, window):
         ("Fullscreen", window.toggleFullscreen),
         ("Maximize", window.toggleMaximize),
         ("Minimize", window.toggleMinimize),
+        ("Set Focus", window.setFocus),
+        ("Keep Above Others", window.toggleAlwaysOntTop),
         ("Close", window.close),
     ]
     for label, action in actions:
