@@ -79,7 +79,7 @@ def onWindowOpen(self, window):
         ("Maximize", window.toggleMaximize),
         ("Minimize", window.toggleMinimize),
         ("Set Focus", window.setFocus),
-        ("Keep Above Others", window.toggleAlwaysOntTop),
+        ("Keep Above Others", window.toggleAlwaysOnTop),
         ("Close", window.close),
     ]
     for label, action in actions:
