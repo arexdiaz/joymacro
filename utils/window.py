@@ -18,6 +18,11 @@ class Window:
         self.title = self.get_title()
         self.binary = self.get_binary()
 
+    def _send_event(self, event):
+        mask = X.SubstructureRedirectMask | X.SubstructureNotifyMask
+        self.display.send_event(self.display.screen().root, event, mask)
+        self.display.flush()
+
     def get_pid(self):
         try:
             atom = self.display.intern_atom("_NET_WM_PID")
@@ -79,23 +84,20 @@ class Window:
             logger.error(f"Failed to close window {self.id}: {e}")
 
     def toggleFullscreen(self):
-            try:
-                wm_state = self.display.intern_atom("_NET_WM_STATE")
-                fullscreen = self.display.intern_atom("_NET_WM_STATE_FULLSCREEN")
+        try:
+            wm_state = self.display.intern_atom("_NET_WM_STATE")
+            fullscreen = self.display.intern_atom("_NET_WM_STATE_FULLSCREEN")
 
-                event = ClientMessage(
-                    window=self.window,
-                    client_type=wm_state,
-                    data=(32, [2, fullscreen, 0, 0, 0])
-                )
+            event = ClientMessage(
+                window=self.window,
+                client_type=wm_state,
+                data=(32, [2, fullscreen, 0, 0, 0])
+            )
 
-                mask = X.SubstructureRedirectMask | X.SubstructureNotifyMask
-                self.display.send_event(self.display.screen().root, event, mask)
-                self.display.flush()
-
-                logger.debug(f"Toggled fullscreen for window {self.id}")
-            except XError as e:
-                logger.error(f"Toggle failed: {e}")
+            self._send_event(event)
+            logger.debug(f"Toggled fullscreen for window {self.id}")
+        except XError as e:
+            logger.error(f"Toggle failed: {e}")
 
     def toggleMaximize(self):
         try:
@@ -109,10 +111,7 @@ class Window:
                 data=(32, [2, max_vert, max_horz, 0, 0])
             )
 
-            mask = X.SubstructureRedirectMask | X.SubstructureNotifyMask
-            self.display.send_event(self.display.screen().root, event, mask)
-            self.display.flush()
-
+            self._send_event(event)
             logger.info(f"Maximize for window {self.id}")
         except XError as e:
             logger.error(f"Toggle failed: {e}")
@@ -128,10 +127,7 @@ class Window:
                 data=(32, [target_state, 0, 0, 0, 0])
             )
 
-            mask = X.SubstructureRedirectMask | X.SubstructureNotifyMask
-            self.display.send_event(self.display.screen().root, event, mask)
-            self.display.flush()
-
+            self._send_event(event)
             logger.debug(f"Minimize for window {self.id}")
         except XError as e:
             logger.error(f"Toggle failed: {e}")
@@ -145,14 +141,11 @@ class Window:
                 data=(32, [2, X.CurrentTime, 0, 0, 0])
             )
 
-            mask = X.SubstructureRedirectMask | X.SubstructureNotifyMask
-            self.display.send_event(self.display.screen().root, event, mask)
-            self.display.flush()
-
+            self._send_event(event)
             logger.debug(f"Focused window {self.id}")
         except XError as e:
             logger.error(f"Failed to focus window {self.id}: {e}")
-
+    
     def toggleAlwaysOnTop(self):
         try:
             wm_state = self.display.intern_atom("_NET_WM_STATE")
@@ -164,10 +157,7 @@ class Window:
                 data=(32, [ 2, above, 0, 0, 0])
             )
 
-            mask = X.SubstructureRedirectMask | X.SubstructureNotifyMask
-            self.display.send_event(self.display.screen().root, event, mask)
-            self.display.flush()
-
+            self._send_event(event)
             logger.debug(f"Always on top for window {self.id}")
         except XError as e:
             logger.error(f"Toggle failed: {e}")
@@ -177,16 +167,13 @@ class Window:
             mwm_hints = self.display.intern_atom("_MOTIF_WM_HINTS")
             hints = [2, 0, 0, 0, 0]
 
-            data = ClientMessage(
+            event = ClientMessage(
                 window=self.window,
                 client_type=mwm_hints,
                 data=(32, hints)
             )
 
-            mask = X.SubstructureRedirectMask | X.SubstructureNotifyMask
-            self.display.send_event(self.window, data, mask)
-            self.display.flush()
-
+            self._send_event(event)
             logger.debug(f"Removed title bar and frame for window {self.id}")
         except XError as e:
             logger.error(f"Failed to remove title bar and frame for window {self.id}: {e}")
@@ -194,7 +181,6 @@ class Window:
     @property
     def get_fullscreen_type(self):
         try:
-            # Check EWMH atoms first
             state = self.get_net_wm_state()
             override_redirect = self.window.get_attributes().override_redirect
             window_geometry = self.window.get_geometry()
@@ -243,7 +229,6 @@ class Window:
     @property
     def is_active(self):
         try:
-            atom = self.display.intern_atom("_NET_ACTIVE_WINDOW")
             prop = self.display.get_input_focus().focus
             return prop == self.window
         except XError:
