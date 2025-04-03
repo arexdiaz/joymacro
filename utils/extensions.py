@@ -10,6 +10,7 @@ import os
 import psutil
 import types
 import re
+import utils.commands as cmd
 
 logger = logging.getLogger("main")
 
@@ -40,30 +41,30 @@ def get_essid(interface='wlp1s0'):
 
 ''' Profile Container Functions'''
 def initProfile(self):
-    profile_value = exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
+    profile_value = cmd.exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
     self.check = " ✓"
-    exp = r"<(?=[^>]*\bPOWER_MODEL\b)(?=[^>]*\bID\b)[^>]+>"
+    exp = r"<\s*([^>]+?)\s*>"
     
     with open("/etc/nvpmodel.conf", "r") as f:
-        file_text = re.findall(exp, f.read())
-
-    lines = [line for line in re.findall(r'<\s*([^>]+?)\s*>', file_text)
-            if "POWER_MODEL" in line and "ID=" in line]
+        lines = [line for line in re.findall(exp, f.read())
+                if "POWER_MODEL" in line and "ID=" in line]
 
     self.profiles = [
-        dict([token.split("=", 1) for token in tokens[1:]])
+        record
         for tokens in (line.strip().split() for line in lines)
+        for record in [dict([("TYPE", tokens[0])] + [token.split("=", 1) for token in tokens[1:]])]
+        if record.get("ID", "").isdigit()
     ]
 
-    for _, id, name in self.profiles.values():
-        title = f"{id}: {name}"
+    for p in self.profiles:
+        title = f"{p.get("ID")}: {p.get("NAME")}"
         if id == profile_value:
             title += self.check
-            self.current_profile = name
-        self.createButton(title, partial(self.changeProfile, name, id))
+            self.current_profile = p.get("NAME")
+        self.createButton(title, partial(self.changeProfile, p.get("NAME"), p.get("ID")))
 
 def updateProfile(self):
-    current_profile = exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
+    current_profile = cmd.exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
     for i in range(self.layout.count()):
         button = self.layout.itemAt(i).widget()
         if not isinstance(button, QPushButton):
@@ -75,7 +76,7 @@ def updateProfile(self):
 
 def changeProfile(self, name, value):
     self.current_profile = name
-    cmd = exec(f"sudo /usr/sbin/nvpmodel -m {value}")
+    cmd = cmd.exec(f"sudo /usr/sbin/nvpmodel -m {value}")
     self.updateProfile()
 
 '''Status Container Functions'''
@@ -170,9 +171,9 @@ def getHWStatus(self):
     else:
         battery_status = ""
 
-    index = exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
+    i = cmd.exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
     profile_container = self.getChild("Toolbox").getChild("OC Profile")
-    profile_container.current_profile = profile_container.profiles[index]
+    profile_container.current_profile = profile_container.profiles[int(i)].get("NAME")
     self.getWidget("hwstat").widget().setText(
             f"{current_date} {current_time}\n"\
             f"{user}@{host_name}\n"\
