@@ -1,0 +1,18 @@
+launcher:
+  "Emulation Station": "es-de"
+  "Lutris": "lutris"
+  "Pi Apps": "pi-apps"
+  "Konsole": "konsole"
+
+scripts:
+  "Tmux Session": "tmux new-session -d -s simple"
+  "Link Cores": "/home/pi/scripts/link_cores.sh"
+  "Update Overlay": "cd {self.current_directory} && git fetch && git pull"
+  "Restart Joycond": "systemctl restart joycond.service"
+
+services:
+  "FTP": "vsftpd"
+  "SecureShell": "ssh.socket"
+  "Samba Share": "smbd"
+  "Bluetooth": "bluetooth.service"
+  "WiFi": "wpa_supplicant.service"

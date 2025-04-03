@@ -1,13 +1,6 @@
-from functools import partial
-from PyQt6.QtCore import QTime, QDate
 import logging
-import netifaces
-import requests
-import threading
 import subprocess
 import os
-import psutil
-import types
 logger = logging.getLogger("main")
 
 

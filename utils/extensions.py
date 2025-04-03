@@ -1,6 +1,7 @@
 from functools import partial
 from PyQt6.QtWidgets import QPushButton
 from PyQt6.QtCore import QTime, QDate
+from utils.commands import exec as cmd_exec
 import logging
 import netifaces
 import requests
@@ -10,7 +11,6 @@ import os
 import psutil
 import types
 import re
-import utils.commands as cmd
 
 logger = logging.getLogger("main")
 
@@ -41,7 +41,7 @@ def get_essid(interface='wlp1s0'):
 
 ''' Profile Container Functions'''
 def initProfile(self):
-    profile_value = cmd.exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
+    profile_value = cmd_exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
     self.check = " ✓"
     exp = r"<\s*([^>]+?)\s*>"
     
@@ -64,7 +64,7 @@ def initProfile(self):
         self.createButton(title, partial(self.changeProfile, p.get("NAME"), p.get("ID")))
 
 def updateProfile(self):
-    current_profile = cmd.exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
+    current_profile = cmd_exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
     for i in range(self.layout.count()):
         button = self.layout.itemAt(i).widget()
         if not isinstance(button, QPushButton):
@@ -76,7 +76,7 @@ def updateProfile(self):
 
 def changeProfile(self, name, value):
     self.current_profile = name
-    cmd = cmd.exec(f"sudo /usr/sbin/nvpmodel -m {value}")
+    cmd = cmd_exec(f"sudo /usr/sbin/nvpmodel -m {value}")
     self.updateProfile()
 
 '''Status Container Functions'''
@@ -171,7 +171,7 @@ def getHWStatus(self):
     else:
         battery_status = ""
 
-    i = cmd.exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
+    i = cmd_exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
     profile_container = self.getChild("Toolbox").getChild("OC Profile")
     profile_container.current_profile = profile_container.profiles[int(i)].get("NAME")
     self.getWidget("hwstat").widget().setText(

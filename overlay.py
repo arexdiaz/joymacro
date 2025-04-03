@@ -73,8 +73,9 @@ class OverlayWindow(QMainWindow):
     def __init__(self, gs):
         super().__init__()
         self.gs = gs
-        self.current_file_path = os.path.abspath(os.path.join(__file__, os.pardir))
-        self.current_directory = os.path.dirname(self.current_file_path)
+        self.current_directory = os.path.abspath(os.path.join(__file__, os.pardir))
+        with open(f"{self.current_directory}/config.yaml") as file:
+            self.properties_file = yaml.safe_load(file)
         self.initUI()
 
     def initUI(self):
@@ -199,13 +200,7 @@ class OverlayWindow(QMainWindow):
             debug_container.createButton("debug_exit", self.closeApplication, self.gs.red, 0.35)
 
         '''Services Stuff'''
-        services = {
-            "FTP": "vsftpd",
-            "SecureShell": "ssh.socket",
-            "Samba Share": "smbd",
-            "Bluetooth": "bluetooth.service",
-            "WiFi": "wpa_supplicant.service",
-        }
+        services = self.properties_file.get("services")
 
         for label_text, service in services.items():
             service_exist = cmd.exec(f"systemctl show {service} --no-page --property=LoadState")
@@ -220,23 +215,17 @@ class OverlayWindow(QMainWindow):
 
         '''Script Stuff'''
         self.profile_container.initProfile()
-        scripts = {
-            "Tmux Session": partial(cmd.detachExec, "tmux new-session -d -s simple"),
-            "Link Cores": partial(cmd.detachExec, "/home/pi/scripts/link_cores.sh"),
-            "Update Overlay": partial(cmd.detachExec, f"cd {self.current_directory} && git fetch && git pull"),
-            "Restart Joycond": partial(cmd.detachExec, "systemctl restart joycond.service")
-        }
+        scripts = self.properties_file.get("scripts")
 
         for label_text, script in scripts.items():
-            toolbox_container.createButton(label_text, script)
+            toolbox_container.createButton(label_text, partial(cmd.detachExec, script))
 
         # TODO add repo options
 
         '''Apps Stuff'''
-        with open(f"{self.current_directory}/apps.yaml") as file:
-            apps = yaml.safe_load(file).get("launcher")
-        for app in apps:
-           launcher_container.createButton(app.get("title"), partial(cmd.detachExec, app.get("binary")))
+        apps = self.properties_file.get("launcher")
+        for label_text, binary in apps.items():
+           launcher_container.createButton(label_text, partial(cmd.detachExec, binary))
 
         primary_container.createSlider(
             self.setBrightness,
