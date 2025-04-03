@@ -247,7 +247,7 @@ class WindowMonitor(QThread):
         current_file_path = os.path.abspath(os.path.join(__file__, os.pardir))
         current_directory = os.path.dirname(current_file_path)
 
-        with open(f"{current_directory}/properties.yaml") as file:
+        with open(f"{current_directory}/window-config.yaml") as file:
             blacklist, saved_programs = yaml.safe_load(file).values()
 
         display = Display()
