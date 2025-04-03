@@ -15,6 +15,7 @@ def sanitizeInput(string):
 class ContainerManager:
     def __init__(self):
         self.containers = {}
+        self.current_container = None
 
     def addContainer(self, container):
         self.containers[container.id] = container
@@ -40,17 +41,12 @@ class ContainerManager:
         self.containers.pop(label).container.deleteLater()
 
     def _getCPUStatus(self):
-        def recursive(values):
-            for container in values:
-                if container.childs:
-                    recursive(container.childs.values())
-                container.getWidget("cpu_stats").widget().setText(" ".join(cpu_status))
-
         cpu_usage = psutil.cpu_percent(percpu=True)
         cpu_status = []
         for i, usage in enumerate(cpu_usage):
             cpu_status.append(f"CPU{i}: {usage}%")
-        recursive(self.containers.values())
+        if self.current_container:
+            self.current_container.getWidget("cpu_stats").widget().setText(" ".join(cpu_status))
 
 class ContainerProp:
     def __init__(self, height, width, gs, label=None, id=None):
@@ -116,6 +112,8 @@ class ContainerProp:
         def _switchContainer(first_container, second_container):
             first_container.container.setVisible(False)
             second_container.container.setVisible(True)
+            first_container.cm.current_container = second_container
+            first_container.cm._getCPUStatus()
 
         child = ContainerProp(
             self.container.height(),
@@ -124,6 +122,7 @@ class ContainerProp:
             label=label,
             id=id
         )
+        child.cm = self.cm
 
         child.createContainer(
             self.OW, self.x, self.y, self.w, self.h,

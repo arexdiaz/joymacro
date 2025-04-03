@@ -59,7 +59,7 @@ class CPUThread(QThread):
     def run(self):
         while True:
             self.cpu_updated.emit()
-            self.msleep(2500)
+            self.msleep(2000)
 
 class AppThread(QThread):
     is_active = pyqtSignal()
@@ -170,6 +170,8 @@ class OverlayWindow(QMainWindow):
         primary_container.createLabel(" ", "hwstat", 16)
         primary_container.createLabel(" ", "separator", 4, solid=True)
         primary_container.createButton("Power Options", self.spawnLogout, self.gs.gray, self.gs.opacity, pos="bottom")
+        primary_container.cm = self.cm
+        self.cm.current_container = primary_container
 
         primary_container.getHWStatus = types.MethodType(getHWStatus, primary_container)
 
