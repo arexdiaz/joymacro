@@ -3,9 +3,9 @@ from Xlib.protocol.event import ClientMessage
 from Xlib.display import Display
 from Xlib import X, Xatom, Xutil
 from Xlib.error import XError
-import json
 import logging
 import os
+import yaml
 
 logger = logging.getLogger("main")
 
@@ -247,7 +247,8 @@ class WindowMonitor(QThread):
         current_file_path = os.path.abspath(os.path.join(__file__, os.pardir))
         current_directory = os.path.dirname(current_file_path)
 
-        blacklist, saved_programs = json.loads(open(f"{current_directory}/properties.json", "r").read()).values()
+        with open(f"{current_directory}/properties.yaml") as file:
+            blacklist, saved_programs = yaml.safe_load(file).values()
 
         display = Display()
         root = display.screen().root

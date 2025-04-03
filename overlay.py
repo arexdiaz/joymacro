@@ -3,12 +3,12 @@ from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from functools import partial
 from utils.container import ContainerManager, ContainerProp
 import logging
-import json
 import os
 from utils.extensions import *
 import utils.commands as cmd
 import utils.window
 import types
+import yaml
 
 logger = logging.getLogger("main")
 
@@ -223,15 +223,18 @@ class OverlayWindow(QMainWindow):
         scripts = {
             "Tmux Session": partial(cmd.detachExec, "tmux new-session -d -s simple"),
             "Link Cores": partial(cmd.detachExec, "/home/pi/scripts/link_cores.sh"),
-            "Update Overlay": partial(cmd.detachExec, "cd /home/pi/overlay && git fetch && git pull"),
-            "Restart Joycond (WIP)": partial(logger.info, "this is a test!")
+            "Update Overlay": partial(cmd.detachExec, f"cd {self.current_directory} && git fetch && git pull"),
+            "Restart Joycond": partial(cmd.detachExec, "systemctl restart joycond.service")
         }
 
         for label_text, script in scripts.items():
             toolbox_container.createButton(label_text, script)
 
+        # TODO add repo options
+
         '''Apps Stuff'''
-        apps = json.loads(open(f"{self.current_file_path}/apps.json", "r").read()).get("launcher")
+        with open(f"{self.current_directory}/apps.yaml") as file:
+            apps = yaml.safe_load(file).get("launcher")
         for app in apps:
            launcher_container.createButton(app.get("title"), partial(cmd.detachExec, app.get("binary")))
 
