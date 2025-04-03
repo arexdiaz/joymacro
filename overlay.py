@@ -5,6 +5,7 @@ from utils.container import ContainerManager, ContainerProp
 import logging
 import json
 import os
+from utils.extensions import *
 import utils.commands as cmd
 import utils.window
 import types
@@ -169,13 +170,13 @@ class OverlayWindow(QMainWindow):
         primary_container.createLabel(" ", "separator", 4, solid=True)
         primary_container.createButton("Power Options", self.spawnLogout, self.gs.gray, self.gs.opacity, pos="bottom")
 
-        primary_container.getHWStatus = types.MethodType(cmd.getHWStatus, primary_container)
+        primary_container.getHWStatus = types.MethodType(getHWStatus, primary_container)
 
         launcher_container = self.cm.addContainer(primary_container.createChildContainer(app_name))
         
         winman_container = self.cm.addContainer(primary_container.createChildContainer(wm_name))
-        winman_container.onWindowOpen = types.MethodType(cmd.onWindowOpen, winman_container)
-        winman_container.onWindowClose = types.MethodType(cmd.onWindowClose, winman_container)
+        winman_container.onWindowOpen = types.MethodType(onWindowOpen, winman_container)
+        winman_container.onWindowClose = types.MethodType(onWindowClose, winman_container)
 
         window_monitor = utils.window.WindowMonitor()
         window_monitor.on_window_create.connect(winman_container.onWindowOpen)
@@ -185,8 +186,9 @@ class OverlayWindow(QMainWindow):
         toolbox_container  = self.cm.addContainer(primary_container.createChildContainer(toolbox_name, pos="bottom"))
 
         self.profile_container = self.cm.addContainer(toolbox_container.createChildContainer(nvpm_name))
-        self.profile_container.updateProfile = types.MethodType(cmd.updateProfile, self.profile_container)
-        self.profile_container.changeProfile = types.MethodType(cmd.changeProfile, self.profile_container)
+        self.profile_container.updateProfile = types.MethodType(updateProfile, self.profile_container)
+        self.profile_container.changeProfile = types.MethodType(changeProfile, self.profile_container)
+        self.profile_container.initProfile = types.MethodType(initProfile, self.profile_container)
 
         services_container = self.cm.addContainer(toolbox_container.createChildContainer(services_name))
         wifi_container = self.cm.addContainer(toolbox_container.createChildContainer(wifi))
@@ -217,25 +219,7 @@ class OverlayWindow(QMainWindow):
 
 
         '''Script Stuff'''
-        profile_value = cmd.exec("echo -n $(echo $(sudo /usr/sbin/nvpmodel -q) | awk 'END{print $NF}')").stdout.strip()
-        self.profile_container.check = " ✓"
-        self.profile_container.profiles = {
-            "0": "Console",
-            "1": "Handheld",
-            "2": "OC CPU",
-            "3": "OC GPU",
-            "4": "OC All",
-            "5": "Perf All",
-            "6": "Perf OC All"
-        }
-        for value, name in self.profile_container.profiles.items():
-            title = f"{value}: {name}"
-            if value == profile_value:
-                title += self.profile_container.check
-                self.profile_container.current_profile = name
-            self.profile_container.createButton(title, partial(self.profile_container.changeProfile, name, value))
-
-
+        self.profile_container.initProfile()
         scripts = {
             "Tmux Session": partial(cmd.detachExec, "tmux new-session -d -s simple"),
             "Link Cores": partial(cmd.detachExec, "/home/pi/scripts/link_cores.sh"),
