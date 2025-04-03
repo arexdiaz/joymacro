@@ -156,6 +156,7 @@ class OverlayWindow(QMainWindow):
         app_name = "App Launcher"
         toolbox_name = "Toolbox"
         nvpm_name = "OC Profile"
+        scripts_name = "Scripts"
         services_name = "Services"
         wm_name = "Active Windows"
         debug_name = "debug_menu"
@@ -193,6 +194,7 @@ class OverlayWindow(QMainWindow):
         self.profile_container.changeProfile = types.MethodType(changeProfile, self.profile_container)
         self.profile_container.initProfile = types.MethodType(initProfile, self.profile_container)
 
+        scripts_container = self.cm.addContainer(toolbox_container.createChildContainer(scripts_name))
         services_container = self.cm.addContainer(toolbox_container.createChildContainer(services_name))
         wifi_container = self.cm.addContainer(toolbox_container.createChildContainer(wifi))
         bluetooth_container = self.cm.addContainer(toolbox_container.createChildContainer(bluetooth))
@@ -220,7 +222,7 @@ class OverlayWindow(QMainWindow):
         scripts = self.properties_file.get("scripts")
 
         for label_text, script in scripts.items():
-            toolbox_container.createButton(label_text, partial(cmd.detachExec, script))
+            scripts_container.createButton(label_text, partial(cmd.detachExec, script))
 
         # TODO add repo options
 
