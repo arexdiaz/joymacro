@@ -16,7 +16,7 @@ class Window:
         self.window = display.create_resource_object("window", win_id)
         self.pid = self.get_pid()
         self.title = self.get_title()
-        self.binary = self.get_binary()
+        self.binary, self.args = self.get_binary()
 
     def _send_event(self, event):
         mask = X.SubstructureRedirectMask | X.SubstructureNotifyMask
@@ -48,11 +48,21 @@ class Window:
             if self.pid is None:
                 return None
             exe_path = f"/proc/{self.pid}/exe"
-            if os.path.exists(exe_path):
-                return os.readlink(exe_path).split("/")[-1]
-            return None
+            cmdline_path = f"/proc/{self.pid}/cmdline"
+
+            # Get the binary name
+            binary_name = os.readlink(exe_path).split("/")[-1] if os.path.exists(exe_path) else None
+
+            # Get the command-line arguments
+            if os.path.exists(cmdline_path):
+                with open(cmdline_path, "r") as f:
+                    cmdline = f.read().strip().replace("\0", " ")
+            else:
+                cmdline = None
+
+            return {binary_name, cmdline}
         except Exception as e:
-            logger.error(f"Failed to get binary for window {self.id}: {e}")
+            logger.error(f"Failed to get binary or arguments for window {self.id}: {e}")
             return None
 
     def get_net_wm_state(self):
