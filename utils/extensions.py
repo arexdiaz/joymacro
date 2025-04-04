@@ -103,7 +103,8 @@ def initStats(stats, window):
 
 '''Window Manager Functions'''
 def onWindowOpen(self, window):
-    child_container = self.createChildContainer(window.title, id=str(window.id))
+    title = window.title if window.title.lower() != "unknown" else window.binary
+    child_container = self.createChildContainer(title, id=str(window.id))
     actions = [
         ("Fullscreen", window.toggleFullscreen),
         ("Maximize", window.toggleMaximize),
