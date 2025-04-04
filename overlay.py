@@ -197,8 +197,8 @@ class OverlayWindow(QMainWindow):
         self.profile_container.changeProfile = types.MethodType(changeProfile, self.profile_container)
         self.profile_container.initProfile = types.MethodType(initProfile, self.profile_container)
 
-        scripts_container = self.cm.addContainer(toolbox_container.createChildContainer(scripts_name))
         services_container = self.cm.addContainer(toolbox_container.createChildContainer(services_name))
+        scripts_container = self.cm.addContainer(services_container.createChildContainer(scripts_name))
         git_container = self.cm.addContainer(toolbox_container.createChildContainer("Repos"))
         wifi_container = self.cm.addContainer(toolbox_container.createChildContainer(wifi))
         bluetooth_container = self.cm.addContainer(toolbox_container.createChildContainer(bluetooth))
@@ -215,7 +215,7 @@ class OverlayWindow(QMainWindow):
             if service_exist.stdout.strip() == "LoadState=not-found":
                 continue
             status = cmd.exec(f"systemctl is-active --quiet {service}").returncode == 0
-            service_state, bg_color = ["ON", self.gs.green] if status else ["OFF", self.gs.gray]
+            service_state, bg_color = ["ON", self.gs.green] if status else ["OFF", None]
             services_container.createButton(f"{label_text}: {service_state}", \
                                        partial(self.toggleService, service), \
                                        bg_color, self.gs.opacity)
