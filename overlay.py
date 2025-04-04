@@ -196,6 +196,7 @@ class OverlayWindow(QMainWindow):
 
         scripts_container = self.cm.addContainer(toolbox_container.createChildContainer(scripts_name))
         services_container = self.cm.addContainer(toolbox_container.createChildContainer(services_name))
+        git_container = self.cm.addContainer(toolbox_container.createChildContainer("Repos"))
         wifi_container = self.cm.addContainer(toolbox_container.createChildContainer(wifi))
         bluetooth_container = self.cm.addContainer(toolbox_container.createChildContainer(bluetooth))
 
@@ -225,7 +226,7 @@ class OverlayWindow(QMainWindow):
             scripts_container.createButton(label_text, partial(cmd.detachExec, script))
 
         # TODO add repo options
-
+        
         '''Apps Stuff'''
         apps = self.properties_file.get("launcher")
         for label_text, binary in apps.items():
