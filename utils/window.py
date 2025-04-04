@@ -45,6 +45,7 @@ class Window:
 
     def get_binary(self):
         try:
+            if not self.pid: return (None, None)
             exe_path = f"/proc/{self.pid}/exe"
             cmdline_path = f"/proc/{self.pid}/cmdline"
 
@@ -58,7 +59,7 @@ class Window:
             return (bin_name, cmdline)
         except Exception as e:
             logger.error(f"Failed to get binary or arguments for window {self.id}: {e}")
-            return None
+            return (None, None)
 
     def get_net_wm_state(self):
         try:

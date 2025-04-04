@@ -151,6 +151,7 @@ def onWindowClose(self, window):
     if child.container.isVisible():
         child.container.setVisible(False)
         self.container.setVisible(True)
+        self.cm.current_container = self
 
     self.removeChild(id)
 
