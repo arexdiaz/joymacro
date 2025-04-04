@@ -185,7 +185,7 @@ class OverlayWindow(QMainWindow):
         winman_container.onWindowClose = types.MethodType(onWindowClose, winman_container)
 
         window_monitor = utils.window.WindowMonitor()
-        window_monitor.change_profile = self.self.window_file.get("apps")
+        window_monitor.change_profile = self.window_file.get("apps")
         window_monitor.on_window_create.connect(winman_container.onWindowOpen)
         window_monitor.on_window_close.connect(winman_container.onWindowClose)
         window_monitor.start()
