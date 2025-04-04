@@ -87,6 +87,7 @@ def initStats(stats, window):
             f"PID: {window.pid}\n"
             f"Title: {window.title}\n"
             f"Binary: {window.binary}\n"
+            f"Args: {window.args}\n"
             f"Is Minimized: {window.is_minimized}\n"
             f"Is Maximized: {window.is_maximized}\n"
             f"Is Fullscreen: {window.is_fullscreen}\n"

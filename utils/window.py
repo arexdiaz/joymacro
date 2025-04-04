@@ -60,7 +60,7 @@ class Window:
             else:
                 cmdline = None
 
-            return {binary_name, cmdline}
+            return (binary_name, cmdline)
         except Exception as e:
             logger.error(f"Failed to get binary or arguments for window {self.id}: {e}")
             return None
