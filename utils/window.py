@@ -16,7 +16,7 @@ class Window:
         self.window = display.create_resource_object("window", win_id)
         self.pid = self.get_pid()
         self.title = self.get_title()
-        self.binary, self.args = self.get_binary()
+        self.binary, self.cmdline = self.get_binary()
 
     def _send_event(self, event):
         mask = X.SubstructureRedirectMask | X.SubstructureNotifyMask
@@ -45,22 +45,17 @@ class Window:
 
     def get_binary(self):
         try:
-            if self.pid is None:
-                return None
             exe_path = f"/proc/{self.pid}/exe"
             cmdline_path = f"/proc/{self.pid}/cmdline"
 
             # Get the binary name
-            binary_name = os.readlink(exe_path).split("/")[-1] if os.path.exists(exe_path) else None
+            bin_name = os.readlink(exe_path).split("/")[-1] if os.path.exists(exe_path) else None
 
             # Get the command-line arguments
-            if os.path.exists(cmdline_path):
-                with open(cmdline_path, "r") as f:
-                    cmdline = f.read().strip().replace("\0", " ")
-            else:
-                cmdline = None
+            with open(cmdline_path, "r") as f:
+                cmdline = f.read().strip().replace("\0", " ")
 
-            return (binary_name, cmdline)
+            return (bin_name, cmdline)
         except Exception as e:
             logger.error(f"Failed to get binary or arguments for window {self.id}: {e}")
             return None

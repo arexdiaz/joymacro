@@ -76,6 +76,8 @@ class OverlayWindow(QMainWindow):
         self.current_directory = os.path.abspath(os.path.join(__file__, os.pardir))
         with open(f"{self.current_directory}/config.yaml") as file:
             self.properties_file = yaml.safe_load(file)
+        with open(f"{self.current_directory}/window-config.yaml") as file:
+            self.window_file = yaml.safe_load(file)
         self.initUI()
 
     def initUI(self):
@@ -183,6 +185,7 @@ class OverlayWindow(QMainWindow):
         winman_container.onWindowClose = types.MethodType(onWindowClose, winman_container)
 
         window_monitor = utils.window.WindowMonitor()
+        window_monitor.change_profile = self.self.window_file.get("apps")
         window_monitor.on_window_create.connect(winman_container.onWindowOpen)
         window_monitor.on_window_close.connect(winman_container.onWindowClose)
         window_monitor.start()
